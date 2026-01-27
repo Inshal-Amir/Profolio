@@ -1,0 +1,5 @@
+*{box-sizing:border-box}
+input,select,button{font-size:14px;padding:10px 12px;border-radius:10px;border:1px solid #ccc;outline:none}
+input:focus,select:focus{border-color:#999}
+button{cursor:pointer;background:#fff}
+button:disabled{opacity:.6;cursor:not-allowed}
