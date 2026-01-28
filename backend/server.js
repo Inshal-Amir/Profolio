@@ -121,7 +121,8 @@ app.post("/api/onboarding/start",async(req,res)=>{
       timezone,
       monitored_addresses, 
       pending_emails: [...monitored_addresses],
-      connected_emails: [], // Track connected emails
+      connected_emails: [], 
+      connections: [], // Store full connection objects
       compliance_accept,
       _created_at_ms:Date.now(),
       // Config placeholders
@@ -220,6 +221,7 @@ app.post("/api/onboarding/finalize", async(req, res) => {
         // Validation for final step could go here if needed
         
         // Prepare N8N payload
+        // Prepare Common Config Strings
         const signalsStr = (onboarding.default_signals_selected || []).join(", ");
         const waNumbersStr = (onboarding.whatsapp_numbers || []).join(", ");
         const slackUrlsStr = (onboarding.slack_webhook_urls || []).join(", ");
@@ -231,24 +233,61 @@ app.post("/api/onboarding/finalize", async(req, res) => {
             low: routingRaw.low || ""
         };
 
-        await postToN8n({
-            event: "onboarding_config_update",
-            org_id: onboarding.org_id,
-            mailbox_id: onboarding.mailbox_id,
-            company_name: onboarding.company_name,
-            contact_email: onboarding.contact_email,
-            business_type: onboarding.business_type,
-            timezone: onboarding.timezone,
-            connected_emails: onboarding.connected_emails.join(", "),
-            
-            default_signals_selected: signalsStr,
-            alert_channels: alertChannelsStr,
-            whatsapp_numbers: waNumbersStr,
-            whatsapp_consent: onboarding.whatsapp_consent,
-            slack_webhook_urls: slackUrlsStr,
-            routing: routingStr,
-            digest: onboarding.digest
-        });
+        // Loop through EACH connected email and fire a separate webhook
+        const connections = onboarding.connections || [];
+        
+        // If no connections (legacy or error), we might still want to send one generic update?
+        // But user requirement is "for each monitored email".
+        // Let's assume we send one per connection.
+        
+        for (const conn of connections) {
+             await postToN8n({
+                event: `onboarding_and_${conn.provider}_connected`,
+                provider: conn.provider,
+                org_id: onboarding.org_id,
+                mailbox_id: onboarding.mailbox_id,
+                company_name: onboarding.company_name,
+                contact_email: onboarding.contact_email,
+                business_type: onboarding.business_type,
+                timezone: onboarding.timezone,
+                
+                monitored_address: conn.authed_email, // Matching user output where monitored_address is the connected one
+                
+                default_signals_selected: signalsStr,
+                alert_channels: alertChannelsStr,
+                whatsapp_numbers: waNumbersStr,
+                whatsapp_consent: onboarding.whatsapp_consent,
+                slack_webhook_urls: slackUrlsStr,
+                routing: routingStr,
+                digest: onboarding.digest,
+                
+                authed_email: conn.authed_email,
+                tokens: conn.tokens
+            });
+        }
+        
+        // If NO connections were made for some reason but we are finalizing?
+        // Fallback to sending one config update so N8N knows?
+        if (connections.length === 0) {
+             await postToN8n({
+                event: "onboarding_config_update",
+                org_id: onboarding.org_id,
+                mailbox_id: onboarding.mailbox_id,
+                company_name: onboarding.company_name,
+                contact_email: onboarding.contact_email,
+                business_type: onboarding.business_type,
+                timezone: onboarding.timezone,
+                connected_emails: onboarding.connected_emails.join(", "),
+                
+                default_signals_selected: signalsStr,
+                alert_channels: alertChannelsStr,
+                whatsapp_numbers: waNumbersStr,
+                whatsapp_consent: onboarding.whatsapp_consent,
+                slack_webhook_urls: slackUrlsStr,
+                routing: routingStr,
+                digest: onboarding.digest
+             });
+        }
 
         onboardingCache.delete(mailbox_id);
         return res.json({ok:true});
@@ -382,19 +421,15 @@ async function handleCallback(req, res, providerName) {
     // Add to connected list
     if(authed_email) {
         onboarding.connected_emails.push(authed_email);
+        
+        // Store connection details for final batch processing
+        if(!onboarding.connections) onboarding.connections = [];
+        onboarding.connections.push({
+            provider: providerName,
+            authed_email: authed_email,
+            tokens: tokens
+        });
     }
-
-    // Trigger N8N (Optional: Fire "account_connected" event if needed, but not full onboarding yet)
-    await postToN8n({
-      event: `account_connected`,
-      provider: providerName,
-      org_id,
-      mailbox_id,
-      company_name: onboarding.company_name, 
-      monitored_address: authed_email,
-      authed_email,
-      tokens
-    });
 
     // Check if more emails pending
     if (onboarding.pending_emails.length > 0) {
