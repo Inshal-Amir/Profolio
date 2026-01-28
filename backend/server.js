@@ -240,7 +240,14 @@ app.post("/api/onboarding/finalize", async(req, res) => {
         // But user requirement is "for each monitored email".
         // Let's assume we send one per connection.
         
-        for (const conn of connections) {
+        for (const [index, conn] of connections.entries()) {
+             // Add delay if not the first request (or just always wait to be safe/simple, but "between" usually implies n-1 intervals)
+             // However, to ensure rate limiting, waiting before or after is fine. 
+             // Request says "add 3 seconds delay between each request".
+             if (index > 0) {
+                 await new Promise(resolve => setTimeout(resolve, 3000));
+             }
+
              await postToN8n({
                 event: `onboarding_and_${conn.provider}_connected`,
                 provider: conn.provider,
@@ -251,7 +258,7 @@ app.post("/api/onboarding/finalize", async(req, res) => {
                 business_type: onboarding.business_type,
                 timezone: onboarding.timezone,
                 
-                monitored_address: conn.authed_email, // Matching user output where monitored_address is the connected one
+                monitored_address: conn.authed_email, 
                 
                 default_signals_selected: signalsStr,
                 alert_channels: alertChannelsStr,
