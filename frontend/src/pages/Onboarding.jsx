@@ -522,11 +522,11 @@ export default function Onboarding() {
                                     <div style={{display:"grid", gap: 10}}>
                                         {formData.whatsapp_numbers.map((num, i) => (
                                             <div key={i} style={{display:"flex", gap: 8}}>
-                                                <select style={{width: 80, ...inputStyle}}>
+                                                <select style={{...inputStyle, width: 80}}>
                                                     {EXT_COUNTRIES.map(c => <option key={c.code}>{c.code} {c.flag}</option>)}
                                                 </select>
                                                 <input 
-                                                    style={{...inputStyle, flex:1}} 
+                                                    style={{...inputStyle, flex:1, width: "auto"}} 
                                                     value={num} 
                                                     onChange={e=>handleArrayUpdate("whatsapp_numbers", i, e.target.value)} 
                                                     placeholder="7123456789"
@@ -648,8 +648,8 @@ export default function Onboarding() {
                 <div style={{paddingTop: 20, borderTop:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between"}}>
                     <button 
                         onClick={() => setStep(s => Math.max(1, s - 1))}
-                        disabled={step === 1 || (step === 2 && !mailboxId)} 
-                        style={{...secondaryBtn, opacity: (step === 1 || (step === 2 && !mailboxId)) ? 0.5 : 1}}
+                        disabled={step === 1} 
+                        style={{...secondaryBtn, opacity: step === 1 ? 0.5 : 1}}
                     >
                         Back
                     </button>
