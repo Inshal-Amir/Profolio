@@ -81,6 +81,9 @@ app.get("/health",(req,res)=>res.json({ok:true}));
 // ------------------------------------------------------------------
 // 1. Start: Receive Form Data
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// 1. Start: Receive Form Data (PARTIAL)
+// ------------------------------------------------------------------
 app.post("/api/onboarding/start",async(req,res)=>{
   try{
     const b=req.body||{};
@@ -93,17 +96,7 @@ app.post("/api/onboarding/start",async(req,res)=>{
     
     // Arrays
     const monitored_addresses=Array.isArray(b.monitored_addresses)?b.monitored_addresses.map(x=>(x||"").trim()).filter(Boolean):[];
-    const default_signals_selected=Array.isArray(b.default_signals_selected)?b.default_signals_selected.map(x=>(x||"").trim()).filter(Boolean):[];
-    const alert_channels=Array.isArray(b.alert_channels)?b.alert_channels.map(x=>(x||"").trim()).filter(Boolean):[];
     
-    // MULTIPLE NUMBERS / URLS
-    const whatsapp_numbers=Array.isArray(b.whatsapp_numbers)?b.whatsapp_numbers.map(x=>(x||"").trim()).filter(Boolean):[];
-    const slack_webhook_urls=Array.isArray(b.slack_webhook_urls)?b.slack_webhook_urls.map(x=>(x||"").trim()).filter(Boolean):[];
-    
-    const whatsapp_consent=!!b.whatsapp_consent;
-
-    const routing = b.routing || {};
-    const digest = b.digest || {};
     const compliance_accept = !!b.compliance_accept;
 
     if(!company_name) missing.push("company_name");
@@ -111,15 +104,6 @@ app.post("/api/onboarding/start",async(req,res)=>{
     if(!business_type) missing.push("business_type");
     if(!compliance_accept) missing.push("compliance_accept");
     if(monitored_addresses.length<1) missing.push("monitored_addresses");
-    if(default_signals_selected.length<1) missing.push("default_signals_selected");
-    if(alert_channels.length<1) missing.push("alert_channels");
-
-    if(alert_channels.includes("whatsapp")){
-        if(whatsapp_numbers.length<1) missing.push("whatsapp_numbers");
-        if(!whatsapp_consent) missing.push("whatsapp_consent");
-    }
-    if(alert_channels.includes("slack")&&slack_webhook_urls.length<1) missing.push("slack_webhook_urls");
-    if(digest.enabled && (!digest.recipients || !digest.recipients.trim())) missing.push("digest_recipients");
 
     if(missing.length){
       return res.status(400).json({error:"Missing required fields",missing});
@@ -136,16 +120,17 @@ app.post("/api/onboarding/start",async(req,res)=>{
       business_type,
       timezone,
       monitored_addresses, 
-      pending_emails: [...monitored_addresses], 
-      default_signals_selected,
-      alert_channels,
-      whatsapp_numbers,   // Array
-      whatsapp_consent,
-      slack_webhook_urls, // Array
-      routing,
-      digest,
+      pending_emails: [...monitored_addresses],
+      connected_emails: [], // Track connected emails
       compliance_accept,
-      _created_at_ms:Date.now()
+      _created_at_ms:Date.now(),
+      // Config placeholders
+      default_signals_selected: [],
+      alert_channels: [],
+      whatsapp_numbers: [],
+      slack_webhook_urls: [],
+      routing: {},
+      digest: {}
     };
 
     onboardingCache.set(mailbox_id,payload);
@@ -157,7 +142,7 @@ app.post("/api/onboarding/start",async(req,res)=>{
 });
 
 // ------------------------------------------------------------------
-// 2. DISPATCHER
+// 2. DISPATCHER (Modified to redirect back to Frontend Wizard)
 // ------------------------------------------------------------------
 app.get("/api/oauth/dispatch", (req, res) => {
   const org_id = req.query.org_id;
@@ -165,17 +150,19 @@ app.get("/api/oauth/dispatch", (req, res) => {
   if(!org_id || !mailbox_id) return res.status(400).send("Missing IDs");
 
   const onboarding = onboardingCache.get(mailbox_id);
-  if(!onboarding) return res.redirect(`${FRONTEND_BASE_URL}/onboarding`);
+  // If session lost, redirect to start
+  if(!onboarding) return res.redirect(`${FRONTEND_BASE_URL}/onboarding?error=session_expired`);
 
   if(!onboarding.pending_emails || onboarding.pending_emails.length === 0) {
-    onboardingCache.delete(mailbox_id);
-    return res.redirect(`${FRONTEND_BASE_URL}/success?mailbox_id=${encodeURIComponent(mailbox_id)}`);
+     // ALL DONE with OAuth
+     return res.redirect(`${FRONTEND_BASE_URL}/onboarding?step=3&mailbox_id=${encodeURIComponent(mailbox_id)}`);
   }
 
   const nextEmail = onboarding.pending_emails[0];
   const provider = detectProvider(nextEmail);
   const qp = `org_id=${encodeURIComponent(org_id)}&mailbox_id=${encodeURIComponent(mailbox_id)}`;
 
+  // Redirect to provider specific start
   if(provider === "google") {
     return res.redirect(`/api/oauth/google/start?${qp}`);
   }
@@ -183,6 +170,7 @@ app.get("/api/oauth/dispatch", (req, res) => {
     return res.redirect(`/api/oauth/microsoft/start?${qp}`);
   }
 
+  // Fallback UI if provider unknown
   const html = `
     <!DOCTYPE html>
     <html style="font-family:system-ui;text-align:center;padding:40px;">
@@ -210,7 +198,69 @@ app.get("/api/oauth/dispatch", (req, res) => {
 });
 
 // ------------------------------------------------------------------
-// 3. OAuth Routes
+// 3. FINALIZE: Update Config & Complete
+// ------------------------------------------------------------------
+app.post("/api/onboarding/finalize", async(req, res) => {
+    try {
+        const { mailbox_id, config } = req.body;
+        if(!mailbox_id) return res.status(400).json({error: "Missing mailbox_id"});
+
+        const onboarding = onboardingCache.get(mailbox_id);
+        if(!onboarding) return res.status(400).json({error: "Session expired"});
+
+        // Merge config
+        onboarding.default_signals_selected = config.default_signals_selected || [];
+        onboarding.alert_channels = config.alert_channels || [];
+        onboarding.whatsapp_numbers = config.whatsapp_numbers || [];
+        onboarding.whatsapp_consent = !!config.whatsapp_consent;
+        onboarding.slack_webhook_urls = config.slack_webhook_urls || [];
+        onboarding.routing = config.routing || {};
+        onboarding.digest = config.digest || {};
+
+        // Validation for final step could go here if needed
+        
+        // Prepare N8N payload
+        const signalsStr = (onboarding.default_signals_selected || []).join(", ");
+        const waNumbersStr = (onboarding.whatsapp_numbers || []).join(", ");
+        const slackUrlsStr = (onboarding.slack_webhook_urls || []).join(", ");
+        const alertChannelsStr = (onboarding.alert_channels || []).join(", ");
+        const routingRaw = onboarding.routing || {};
+        const routingStr = {
+            high: Array.isArray(routingRaw.high) ? routingRaw.high.join(", ") : (routingRaw.high || ""),
+            medium: Array.isArray(routingRaw.medium) ? routingRaw.medium.join(", ") : (routingRaw.medium || ""),
+            low: routingRaw.low || ""
+        };
+
+        await postToN8n({
+            event: "onboarding_config_update",
+            org_id: onboarding.org_id,
+            mailbox_id: onboarding.mailbox_id,
+            company_name: onboarding.company_name,
+            contact_email: onboarding.contact_email,
+            business_type: onboarding.business_type,
+            timezone: onboarding.timezone,
+            connected_emails: onboarding.connected_emails.join(", "),
+            
+            default_signals_selected: signalsStr,
+            alert_channels: alertChannelsStr,
+            whatsapp_numbers: waNumbersStr,
+            whatsapp_consent: onboarding.whatsapp_consent,
+            slack_webhook_urls: slackUrlsStr,
+            routing: routingStr,
+            digest: onboarding.digest
+        });
+
+        onboardingCache.delete(mailbox_id);
+        return res.json({ok:true});
+
+    } catch(e) {
+        console.error(e);
+        res.status(500).json({error: e.message});
+    }
+});
+
+// ------------------------------------------------------------------
+// 4. OAuth Routes
 // ------------------------------------------------------------------
 app.get("/api/oauth/google/start",async(req,res)=>{
   try{
@@ -272,7 +322,7 @@ app.get("/api/oauth/microsoft/callback", async (req, res) => {
 });
 
 // ------------------------------------------------------------------
-// 4. Shared Callback Handler
+// 5. Shared Callback Handler
 // ------------------------------------------------------------------
 async function handleCallback(req, res, providerName) {
   try {
@@ -328,55 +378,43 @@ async function handleCallback(req, res, providerName) {
     if(onboarding.pending_emails && onboarding.pending_emails.length > 0){
       onboarding.pending_emails.shift();
     }
-
-    // ✅ JOIN ARRAYS INTO COMMA-SEPARATED STRINGS FOR WEBHOOK
-    const signalsStr = (onboarding.default_signals_selected || []).join(", ");
-    const waNumbersStr = (onboarding.whatsapp_numbers || []).join(", ");
-    const slackUrlsStr = (onboarding.slack_webhook_urls || []).join(", ");
     
-    // ✅ ALERT CHANNELS -> STRING
-    const alertChannelsStr = (onboarding.alert_channels || []).join(", ");
+    // Add to connected list
+    if(authed_email) {
+        onboarding.connected_emails.push(authed_email);
+    }
 
-    // ✅ JOIN ROUTING ARRAYS AS REQUESTED
-    const routingRaw = onboarding.routing || {};
-    const routingStr = {
-        high: Array.isArray(routingRaw.high) ? routingRaw.high.join(", ") : (routingRaw.high || ""),
-        medium: Array.isArray(routingRaw.medium) ? routingRaw.medium.join(", ") : (routingRaw.medium || ""),
-        low: routingRaw.low || ""
-    };
-
+    // Trigger N8N (Optional: Fire "account_connected" event if needed, but not full onboarding yet)
     await postToN8n({
-      event: `onboarding_and_${providerName}_connected`,
+      event: `account_connected`,
       provider: providerName,
-
       org_id,
       mailbox_id,
-
-      company_name: onboarding.company_name,
-      contact_email: onboarding.contact_email,
-      business_type: onboarding.business_type,
-      timezone: onboarding.timezone,
-      
+      company_name: onboarding.company_name, 
       monitored_address: authed_email,
-      
-      default_signals_selected: signalsStr,
-      
-      // ✅ SENT AS STRING NOW
-      alert_channels: alertChannelsStr,
-      
-      whatsapp_numbers: waNumbersStr,
-      whatsapp_consent: onboarding.whatsapp_consent,
-      slack_webhook_urls: slackUrlsStr,
-      
-      routing: routingStr,
-      digest: onboarding.digest,
-      
       authed_email,
       tokens
     });
 
-    const nextUrl = `/api/oauth/dispatch?org_id=${org_id}&mailbox_id=${mailbox_id}`;
-    return res.redirect(nextUrl);
+    // Check if more emails pending
+    if (onboarding.pending_emails.length > 0) {
+        // Next email
+        const nextEmail = onboarding.pending_emails[0];
+        const nextProvider = detectProvider(nextEmail);
+        const qp = `org_id=${encodeURIComponent(org_id)}&mailbox_id=${encodeURIComponent(mailbox_id)}`;
+        
+         if(nextProvider === "google") {
+            return res.redirect(`/api/oauth/google/start?${qp}`);
+        }
+        if(nextProvider === "microsoft") {
+            return res.redirect(`/api/oauth/microsoft/start?${qp}`);
+        }
+        // If unknown, go to dispatch to ask user
+         return res.redirect(`/api/oauth/dispatch?${qp}`);
+    } else {
+        // ALL DONE -> Return to Frontend Wizard Step 2 (which will auto advance to 3)
+         return res.redirect(`${FRONTEND_BASE_URL}/onboarding?step=3&mailbox_id=${encodeURIComponent(mailbox_id)}`);
+    }
 
   } catch(e) {
     console.error(e);
