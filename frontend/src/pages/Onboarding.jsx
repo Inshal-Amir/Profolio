@@ -36,11 +36,24 @@ const PRESETS = [
 ];
 
 const EXT_COUNTRIES = [
-    { code: "+44", flag: "🇬🇧" },
     { code: "+1", flag: "🇺🇸" },
+    { code: "+44", flag: "🇬🇧" },
     { code: "+61", flag: "🇦🇺" },
     { code: "+49", flag: "🇩🇪" },
-    // Add more as needed
+    { code: "+33", flag: "🇫🇷" },
+    { code: "+34", flag: "🇪🇸" },
+    { code: "+39", flag: "🇮🇹" },
+    { code: "+31", flag: "🇳🇱" },
+    { code: "+46", flag: "🇸🇪" },
+    { code: "+41", flag: "🇨🇭" },
+    { code: "+91", flag: "🇮🇳" },
+    { code: "+86", flag: "🇨🇳" },
+    { code: "+81", flag: "🇯🇵" },
+    { code: "+82", flag: "🇰🇷" },
+    { code: "+55", flag: "🇧🇷" },
+    { code: "+52", flag: "🇲🇽" },
+    { code: "+27", flag: "🇿🇦" },
+    { code: "+971", flag: "🇦🇪" },
 ];
 
 // Mock Plan - In real app, this would come from user session/context
@@ -74,8 +87,9 @@ export default function Onboarding() {
     
     monitored_addresses: [""],
     
-    // Step 3
+    // Step 2 & 3
     selected_universal_signals: {}, 
+    selected_business_signals: {}, // New: toggleable business signals 
     
     // Step 4
     whatsapp_enabled: true,
@@ -164,14 +178,24 @@ export default function Onboarding() {
       });
   }
 
-  function toggleSignal(signal) {
-      setFormData(prev => ({
-          ...prev,
-          selected_universal_signals: {
-              ...prev.selected_universal_signals,
-              [signal]: !prev.selected_universal_signals[signal]
-          }
-      }));
+  function toggleSignal(type, signal) {
+      if (type === 'universal') {
+          setFormData(prev => ({
+              ...prev,
+              selected_universal_signals: {
+                  ...prev.selected_universal_signals,
+                  [signal]: !prev.selected_universal_signals[signal]
+              }
+          }));
+      } else {
+           setFormData(prev => ({
+              ...prev,
+              selected_business_signals: {
+                  ...prev.selected_business_signals,
+                  [signal]: !prev.selected_business_signals[signal]
+              }
+          }));
+      }
   }
 
   function toggleRouting(level, channel) {
@@ -238,7 +262,7 @@ export default function Onboarding() {
      // construct final config
      const signals = [
          ...Object.keys(formData.selected_universal_signals).filter(k=>formData.selected_universal_signals[k]),
-         ...(BUSINESS_SIGNALS[formData.business_type] || [])
+         ...Object.keys(formData.selected_business_signals).filter(k=>formData.selected_business_signals[k])
      ];
      
      // Validate Alerts
@@ -312,7 +336,7 @@ export default function Onboarding() {
   // --- Render ---
   
   const STEPS = [
-      "Biz Info", "Connect", "Signals", "Routes", "Review"
+      "Business Information", "Signals", "Routes", "Connect Inbox", "Review"
   ];
 
   return (
@@ -333,7 +357,7 @@ export default function Onboarding() {
             
             {/* Sidebar / Progress */}
             <div style={{width: 240, background: "#f8fafc", borderRight: "1px solid #eef2f6", padding: 30, display:"flex", flexDirection:"column"}}>
-                <h2 style={{fontSize: 20, fontWeight: 700, color:"#1e293b", marginBottom: 40}}>Mailwise.</h2>
+                <h2 style={{fontSize: 20, fontWeight: 700, color:"#1e293b", marginBottom: 40}}>MailWise</h2>
                 
                 <div style={{display:"flex", flexDirection:"column", gap: 24}}>
                     {STEPS.map((s, idx) => {
@@ -345,7 +369,7 @@ export default function Onboarding() {
                             <div key={num} style={{display:"flex", alignItems:"center", gap: 12, opacity: (active || done) ? 1 : 0.4}}>
                                 <div style={{
                                     width: 28, height: 28, borderRadius: "50%", 
-                                    background: active ? "#2563eb" : (done ? "#10b981" : "#cbd5e1"),
+                                    background: active ? "#6D6CFB" : (done ? "#10b981" : "#cbd5e1"),
                                     color: "white", display:"flex", alignItems:"center", justifyContent:"center",
                                     fontSize: 12, fontWeight: 700
                                 }}>
@@ -369,17 +393,17 @@ export default function Onboarding() {
                 
                 <div style={{marginBottom: 20}}>
                     <h1 style={{fontSize: 24, fontWeight: 700, margin: 0, marginBottom: 8}}>
-                        {step === 1 && "Tell us about your business"}
-                        {step === 2 && "Connect your inboxes"}
-                        {step === 3 && "Configure Signals"}
-                        {step === 4 && "Alerting & Routing"}
+                        {step === 1 && "Start by setting up the basics"}
+                        {step === 2 && "Tell us which messages matter most"}
+                        {step === 3 && "Alerting & Routing"}
+                        {step === 4 && "Connect your inboxes"}
                         {step === 5 && "Review & Launch"}
                     </h1>
                     <p style={{margin: 0, color: "#64748b"}}>
                          {step === 1 && "We'll tailor the AI to your industry."}
-                         {step === 2 && "Securely connect via Google or Microsoft."}
-                         {step === 3 && "Select what you want to be alerted about."}
-                         {step === 4 && "Where should alerts go?"}
+                         {step === 2 && "Configure what MailWise looks for."}
+                         {step === 3 && "Where should alerts go?"}
+                         {step === 4 && "Securely connect via Google or Microsoft."}
                          {step === 5 && "Almost there! One last look."}
                     </p>
                 </div>
@@ -387,7 +411,7 @@ export default function Onboarding() {
                 <div style={{flex: 1, overflowY:"auto"}}>
                     {err && <div style={{background:"#fef2f2", color:"#991b1b", padding: 12, borderRadius: 8, marginBottom: 20, fontSize: 14}}>{err}</div>}
                     
-                    {/* --- STEP 1 --- */}
+                    {/* --- STEP 1: Business Information --- */}
                     {step === 1 && (
                         <div style={{display:"grid", gap: 20}}>
                              <label style={{display:"block"}}>
@@ -417,98 +441,56 @@ export default function Onboarding() {
                                 <span style={{display:"block", fontSize: 13, fontWeight: 600, marginBottom: 6}}>Contact Email</span>
                                 <input style={inputStyle} type="email" value={formData.contact_email} onChange={e=>update("contact_email", e.target.value)} placeholder="you@company.com"/>
                             </label>
-                            
-                            <div style={{fontSize:12, color:"#94a3b8"}}>Timezone detected: {formData.timezone}</div>
                         </div>
                     )}
 
-                    {/* --- STEP 2 --- */}
+                    {/* --- STEP 2: Signals (Previously Step 3) --- */}
                     {step === 2 && (
-                        <div style={{display:"grid", gap: 20}}>
-                            <div style={{display:"grid", gap: 12}}>
-                                {formData.monitored_addresses.map((email, idx) => (
-                                    <div key={idx} style={{display:"flex", gap: 10}}>
-                                        <div style={{flex: 1, position:"relative"}}>
-                                            <input 
-                                                style={{...inputStyle, paddingRight: 40}}
-                                                value={email} 
-                                                onChange={e=>handleArrayUpdate("monitored_addresses", idx, e.target.value)}
-                                                placeholder="support@company.com"
-                                                disabled={!!mailboxId} // Disable editing if already started flow for simplicity? Or allowed?
-                                            />
-                                            {/* Fake Green Check if we are on step 2 (returned from oauth) */}
-                                            {mailboxId && (
-                                                <div style={{position:"absolute", right: 10, top: "50%", transform:"translateY(-50%)", color:"#10b981", fontSize: 18}}>
-                                                    ✓
-                                                </div>
-                                            )}
-                                        </div>
-                                        {!mailboxId && (
-                                            <button onClick={()=>removeArrayItem("monitored_addresses", idx)} style={{color:"#ef4444", background:"none", border:"none", cursor:"pointer"}}>✕</button>
-                                        )}
-                                    </div>
-                                ))}
-                                {!mailboxId && formData.monitored_addresses.length < 5 && (
-                                    <button onClick={()=>addArrayItem("monitored_addresses")} style={{width:"fit-content", fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>
-                                        + Add another email
-                                    </button>
-                                )}
-                            </div>
-                            
-                            {!mailboxId && (
-                                <div style={{marginTop: 10}}>
-                                    <label style={{display:"flex", gap: 10, alignItems:"start", fontSize: 13, color:"#475569"}}>
-                                        <input type="checkbox" checked={formData.compliance_accept} onChange={e=>update("compliance_accept", e.target.checked)} />
-                                        <span>
-                                            I confirm I have authority to connect these inboxes and accept the 
-                                            <a href="#" onClick={e=>{e.preventDefault(); showTerms();}} style={{color:"#2563eb", margin:"0 4px"}}>Terms</a>
-                                             and 
-                                            <a href="#" onClick={e=>{e.preventDefault(); showPrivacy();}} style={{color:"#2563eb", margin:"0 4px"}}>Privacy Policy</a>.
-                                        </span>
-                                    </label>
-                                </div>
-                            )}
-
-                            {mailboxId && (
-                                <div style={{background:"#ecfdf5", padding: 16, borderRadius: 8, color:"#065f46", fontSize: 14}}>
-                                    <strong>Connected!</strong> Your inboxes are largely authorized. Click Next to configure rules.
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* --- STEP 3 --- */}
-                    {step === 3 && (
                         <div>
-                           <h3 style={{fontSize: 16, fontWeight: 600, marginBottom: 12}}>Universal Signals</h3>
+                           <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+                                <h3 style={{fontSize: 16, fontWeight: 600, margin:0}}>Universal Signals</h3>
+                                <span style={{fontSize: 12, color:"#64748b", background:"#f1f5f9", padding:"2px 8px", borderRadius: 12}}>
+                                    {Object.values(formData.selected_universal_signals).filter(Boolean).length} Selected
+                                </span>
+                           </div>
                            <div style={{display:"grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24}}>
                                {UNIVERSAL_SIGNALS.map(s => (
                                    <label key={s} style={{
                                        display:"flex", alignItems:"center", gap: 10, padding: 12, borderRadius: 8,
-                                       border: formData.selected_universal_signals[s] ? "1px solid #2563eb" : "1px solid #e2e8f0",
+                                       border: formData.selected_universal_signals[s] ? "1px solid #6D6CFB" : "1px solid #e2e8f0",
                                        background: formData.selected_universal_signals[s] ? "#eff6ff" : "white",
                                        cursor: "pointer"
                                    }}>
-                                       <input type="checkbox" checked={!!formData.selected_universal_signals[s]} onChange={()=>toggleSignal(s)} />
+                                       <input type="checkbox" checked={!!formData.selected_universal_signals[s]} onChange={()=>toggleSignal('universal', s)} />
                                        <span style={{textTransform:"capitalize"}}>{s}</span>
                                    </label>
                                ))}
                            </div>
                            
-                           <h3 style={{fontSize: 16, fontWeight: 600, marginBottom: 12}}>Business Signals ({formData.business_type})</h3>
-                           <div style={{display:"flex", flexWrap:"wrap", gap: 8, opacity: 0.8}}>
+                           <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+                                <h3 style={{fontSize: 16, fontWeight: 600, margin:0}}>Business Signals ({formData.business_type})</h3>
+                                <span style={{fontSize: 12, color:"#64748b", background:"#f1f5f9", padding:"2px 8px", borderRadius: 12}}>
+                                    {Object.values(formData.selected_business_signals).filter(Boolean).length} Selected
+                                </span>
+                           </div>
+                           <div style={{display:"grid", gridTemplateColumns: "1fr 1fr", gap: 12}}>
                                 {(BUSINESS_SIGNALS[formData.business_type]||[]).map(s => (
-                                    <span key={s} style={{background:"#f1f5f9", boxShadow:"0 1px 2px rgba(0,0,0,0.05)", border:"1px solid #cbd5e1", padding:"6px 10px", borderRadius: 4, fontSize: 13, color:"#334155"}}>
-                                        {s}
-                                    </span>
+                                    <label key={s} style={{
+                                       display:"flex", alignItems:"center", gap: 10, padding: 12, borderRadius: 8,
+                                       border: formData.selected_business_signals[s] ? "1px solid #6D6CFB" : "1px solid #e2e8f0",
+                                       background: formData.selected_business_signals[s] ? "#eff6ff" : "white",
+                                       cursor: "pointer"
+                                   }}>
+                                       <input type="checkbox" checked={!!formData.selected_business_signals[s]} onChange={()=>toggleSignal('business', s)} />
+                                       <span style={{textTransform:"capitalize"}}>{s}</span>
+                                   </label>
                                 ))}
                             </div>
-                            <div style={{fontSize: 12, color:"#94a3b8", marginTop: 8}}>These are automatically monitored for you.</div>
                         </div>
                     )}
 
-                    {/* --- STEP 4 --- */}
-                    {step === 4 && (
+                    {/* --- STEP 3: Routes (Previously Step 4) --- */}
+                    {step === 3 && (
                         <div style={{display:"grid", gap: 24}}>
                             
                             {/* Alert Channels */}
@@ -547,27 +529,28 @@ export default function Onboarding() {
                             </div>
 
                             {/* Slack Section -- CONDITIONAL */}
-                            <div style={{padding: 20, background: PLAN_FEATURES.slack_integration ? "#fff" : "#f1f5f9", border:"1px solid #e2e8f0", borderRadius: 10, opacity: PLAN_FEATURES.slack_integration ? 1 : 0.6}}>
-                                <label style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: (formData.slack_enabled && PLAN_FEATURES.slack_integration) ? 16 : 0}}>
-                                    <div style={{fontWeight: 600}}>
-                                        Slack Alerts 
-                                        {!PLAN_FEATURES.slack_integration && <span style={{fontSize:11, background:"#cbd5e1", padding:"2px 6px", borderRadius:4, marginLeft:8}}>Upgrade Required</span>}
-                                    </div>
-                                    <input type="checkbox" checked={formData.slack_enabled} onChange={e=>update("slack_enabled", e.target.checked)} disabled={!PLAN_FEATURES.slack_integration}/>
-                                </label>
-                                
-                                {formData.slack_enabled && PLAN_FEATURES.slack_integration && (
-                                     <div style={{display:"grid", gap: 10}}>
-                                        {formData.slack_urls.map((v,i)=>(
-                                            <div key={i} style={{display:"flex", gap: 8}}>
-                                                <input value={v} onChange={e=>handleArrayUpdate("slack_urls", i, e.target.value)} placeholder="https://hooks.slack.com/..." style={inputStyle}/>
-                                                <button onClick={()=>removeArrayItem("slack_urls", i)} style={{color:"#ef4444", background:"none", border:"none", cursor:"pointer"}}>✕</button>
-                                            </div>
-                                        ))}
-                                        <button onClick={()=>addArrayItem("slack_urls")} style={{width:"fit-content", fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>+ Add URL</button>
-                                    </div>
-                                )}
-                            </div>
+                             {PLAN_FEATURES.slack_integration && (
+                                <div style={{padding: 20, background: "#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                                    <label style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: formData.slack_enabled ? 16 : 0}}>
+                                        <div style={{fontWeight: 600}}>
+                                            Slack Alerts 
+                                        </div>
+                                        <input type="checkbox" checked={formData.slack_enabled} onChange={e=>update("slack_enabled", e.target.checked)} />
+                                    </label>
+                                    
+                                    {formData.slack_enabled && (
+                                         <div style={{display:"grid", gap: 10}}>
+                                            {formData.slack_urls.map((v,i)=>(
+                                                <div key={i} style={{display:"flex", gap: 8}}>
+                                                    <input value={v} onChange={e=>handleArrayUpdate("slack_urls", i, e.target.value)} placeholder="https://hooks.slack.com/..." style={inputStyle}/>
+                                                    <button onClick={()=>removeArrayItem("slack_urls", i)} style={{color:"#ef4444", background:"none", border:"none", cursor:"pointer"}}>✕</button>
+                                                </div>
+                                            ))}
+                                            <button onClick={()=>addArrayItem("slack_urls")} style={{width:"fit-content", fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>+ Add URL</button>
+                                        </div>
+                                    )}
+                                </div>
+                             )}
 
                             {/* Routing */}
                              <div style={{padding: 20, background:"#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
@@ -578,14 +561,16 @@ export default function Onboarding() {
                                          <span style={{color:"#ef4444", fontWeight:600}}>High Risk</span>
                                          <div style={{display:"flex", gap: 16}}>
                                               {["whatsapp","slack","digest"].map(c => (
-                                                  <label key={c} style={{display:"flex", gap: 6, alignItems:"center", fontSize:13, textTransform:"capitalize", opacity: ((c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled || !PLAN_FEATURES.slack_integration))) ? 0.5 : 1}}>
-                                                      <input type="checkbox" 
-                                                        checked={formData.routing_high.includes(c)} 
-                                                        onChange={()=>toggleRouting("high", c)}
-                                                        disabled={(c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled || !PLAN_FEATURES.slack_integration))}
-                                                      />
-                                                      {c} {c==="slack" && !PLAN_FEATURES.slack_integration && "🔒"}
-                                                  </label>
+                                                  (c !== "slack" || PLAN_FEATURES.slack_integration) && (
+                                                      <label key={c} style={{display:"flex", gap: 6, alignItems:"center", fontSize:13, textTransform:"capitalize", opacity: ((c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled))) ? 0.5 : 1}}>
+                                                          <input type="checkbox" 
+                                                            checked={formData.routing_high.includes(c)} 
+                                                            onChange={()=>toggleRouting("high", c)}
+                                                            disabled={(c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled))}
+                                                          />
+                                                          {c}
+                                                      </label>
+                                                  )
                                               ))}
                                          </div>
                                      </div>
@@ -594,14 +579,16 @@ export default function Onboarding() {
                                          <span style={{color:"#f59e0b", fontWeight:600}}>Medium</span>
                                          <div style={{display:"flex", gap: 16}}>
                                               {["whatsapp","slack","digest"].map(c => (
-                                                  <label key={c} style={{display:"flex", gap: 6, alignItems:"center", fontSize:13, textTransform:"capitalize", opacity: ((c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled || !PLAN_FEATURES.slack_integration))) ? 0.5 : 1}}>
-                                                      <input type="checkbox" 
-                                                        checked={formData.routing_medium.includes(c)} 
-                                                        onChange={()=>toggleRouting("medium", c)}
-                                                        disabled={(c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled || !PLAN_FEATURES.slack_integration))}
-                                                      />
-                                                      {c} {c==="slack" && !PLAN_FEATURES.slack_integration && "🔒"}
-                                                  </label>
+                                                  (c !== "slack" || PLAN_FEATURES.slack_integration) && (
+                                                      <label key={c} style={{display:"flex", gap: 6, alignItems:"center", fontSize:13, textTransform:"capitalize", opacity: ((c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled))) ? 0.5 : 1}}>
+                                                          <input type="checkbox" 
+                                                            checked={formData.routing_medium.includes(c)} 
+                                                            onChange={()=>toggleRouting("medium", c)}
+                                                            disabled={(c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled))}
+                                                          />
+                                                          {c}
+                                                      </label>
+                                                  )
                                               ))}
                                          </div>
                                      </div>
@@ -623,16 +610,82 @@ export default function Onboarding() {
                             </div>
                         </div>
                     )}
+
+                    {/* --- STEP 4: Connect Inbox (Previously Step 2) --- */}
+                    {step === 4 && (
+                        <div style={{display:"grid", gap: 20}}>
+                            <div style={{display:"grid", gap: 12}}>
+                                {formData.monitored_addresses.map((email, idx) => (
+                                    <div key={idx} style={{display:"flex", gap: 10}}>
+                                        <div style={{flex: 1, position:"relative"}}>
+                                            <input 
+                                                style={{...inputStyle, paddingRight: 40}}
+                                                value={email} 
+                                                onChange={e=>handleArrayUpdate("monitored_addresses", idx, e.target.value)}
+                                                placeholder="support@company.com"
+                                                disabled={!!mailboxId} 
+                                            />
+                                            {/* Green Check if returning from oauth with mailboxId set */}
+                                            {mailboxId && (
+                                                <div style={{position:"absolute", right: 10, top: "50%", transform:"translateY(-50%)", color:"#10b981", fontSize: 18}}>
+                                                    ✓
+                                                </div>
+                                            )}
+                                        </div>
+                                        {!mailboxId && (
+                                            <button onClick={()=>removeArrayItem("monitored_addresses", idx)} style={{color:"#ef4444", background:"none", border:"none", cursor:"pointer"}}>✕</button>
+                                        )}
+                                    </div>
+                                ))}
+                                {!mailboxId && formData.monitored_addresses.length < 5 && (
+                                    <button onClick={()=>addArrayItem("monitored_addresses")} style={{width:"fit-content", fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>
+                                        + Add another email
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {/* Terms Checkbox - Only show if not connected yet */}
+                            {!mailboxId && (
+                                <div style={{marginTop: 10}}>
+                                    <label style={{display:"flex", gap: 10, alignItems:"start", fontSize: 13, color:"#475569"}}>
+                                        <input type="checkbox" checked={formData.compliance_accept} onChange={e=>update("compliance_accept", e.target.checked)} />
+                                        <span>
+                                            I confirm I have authority to connect these inboxes and accept the 
+                                            <a href="#" onClick={e=>{e.preventDefault(); showTerms();}} style={{color:"#2563eb", margin:"0 4px"}}>Terms</a>
+                                             and 
+                                            <a href="#" onClick={e=>{e.preventDefault(); showPrivacy();}} style={{color:"#2563eb", margin:"0 4px"}}>Privacy Policy</a>.
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
+
+                             {/* Success Message AFTER connecting */}
+                            {mailboxId && (
+                                <div style={{background:"#ecfdf5", padding: 16, borderRadius: 8, color:"#065f46", fontSize: 14}}>
+                                    <strong>Connected successfully.</strong> Your inboxes are authorized. Click Next to review.
+                                </div>
+                            )}
+                        </div>
+                    )}
                     
                     {/* --- STEP 5 --- */}
                     {step === 5 && (
                         <div style={{display:"grid", gap: 20}}>
                             <div style={{background:"#f8fafc", padding: 20, borderRadius: 10, display:"grid", gap: 12}}>
                                 <Row label="Company" val={formData.company_name} />
-                                <Row label="Inboxes" val={formData.monitored_addresses.join(", ")} />
-                                <Row label="Signals" val={`${Object.keys(formData.selected_universal_signals).length} universal, All ${formData.business_type}`} />
+                                <Row label="Business" val={formData.business_type} />
+                                <div style={{display:"flex", justifyContent:"space-between", borderBottom:"1px solid #e2e8f0", paddingBottom: 8}}>
+                                    <span style={{color:"#64748b", fontSize: 13}}>Signals Configured</span>
+                                    <div style={{display:"flex", alignItems:"center", gap:8}}>
+                                        <span style={{fontWeight: 500, fontSize: 13, textAlign:"right"}}>
+                                            {Object.values(formData.selected_universal_signals).filter(Boolean).length + Object.values(formData.selected_business_signals).filter(Boolean).length} Active
+                                        </span>
+                                        <button onClick={()=>setStep(2)} style={{border:"none", background:"none", color:"#2563eb", cursor:"pointer", fontSize:12, textDecoration:"underline"}}>Edit</button>
+                                    </div>
+                                </div>
                                 <Row label="Alerts" val={formData.whatsapp_enabled ? "WhatsApp Enabled" : "No Instant Alerts"} />
                                 <Row label="Digest" val={formData.digest_enabled ? `Daily at ${formData.digest_time}` : "Disabled"} />
+                                <Row label="Inboxes" val={formData.monitored_addresses.join(", ")} />
                             </div>
                             
                             <div style={{display:"flex", gap: 12}}>
@@ -654,7 +707,8 @@ export default function Onboarding() {
                         Back
                     </button>
                     
-                    {step === 2 && !mailboxId ? (
+                    {/* Button Logic Updates for Step 4 */}
+                    {step === 4 && !mailboxId ? (
                          <button onClick={startOnboarding} disabled={loading} style={primaryBtn}>
                              {loading ? "Connecting..." : "Connect Inboxes"}
                          </button>

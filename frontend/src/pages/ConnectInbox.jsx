@@ -42,7 +42,7 @@ export default function ConnectInbox(){
     <div style={{maxWidth:560,margin:"40px auto",padding:16,fontFamily:"system-ui"}}>
       <h1 style={{marginBottom:6}}>Connect your inbox</h1>
       <p style={{marginTop:0,opacity:.8}}>
-        Mailwise will monitor high-risk emails and alert you on WhatsApp. We never ask for your email password.
+        MailWise will monitor high-risk emails and alert you on WhatsApp. We never ask for your email password.
       </p>
 
       {err?(
