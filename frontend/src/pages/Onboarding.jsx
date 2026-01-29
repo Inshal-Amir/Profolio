@@ -17,15 +17,27 @@ function dedupeWords(arr) {
 }
 
 // --- Constants ---
-const BUSINESS_SIGNALS = {
-  service: ["missed appointment", "quote", "late", "call me"],
-  ecommerce: ["refund", "item missing", "delivery", "damaged"],
-  saas: ["bug", "error", "login failed", "churn", "cancel"],
-  bookings_hospitality: ["check-in", "reservation", "dietary", "room service"]
-};
-
-const UNIVERSAL_SIGNALS = [
-  "urgent", "complaint", "escalate", "emergency"
+const SIGNAL_CATEGORIES = [
+  {
+    id: "urgent",
+    label: "Urgent & High Priority",
+    signals: ["urgent", "complaint", "escalate", "emergency", "missed appointment", "late", "call me"]
+  },
+  {
+    id: "financial",
+    label: "Financial & Sales",
+    signals: ["quote", "refund", "churn", "cancel", "payment", "invoice"]
+  },
+  {
+    id: "cx",
+    label: "Customer Experience",
+    signals: ["item missing", "damaged", "poor service", "dietary", "room service", "check-in"]
+  },
+  {
+    id: "operational",
+    label: "Operational & Other",
+    signals: ["bug", "error", "login failed", "delivery", "reservation", "inquiry"]
+  }
 ];
 
 const PRESETS = [
@@ -76,6 +88,8 @@ export default function Onboarding() {
   
   // Modal State
   const [modalContent, setModalContent] = useState(null); // { title: "", body: "" } or null
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [activeAccordion, setActiveAccordion] = useState("urgent"); // Default open category
 
   // --- Form State ---
   const [formData, setFormData] = useState({
@@ -155,6 +169,21 @@ export default function Onboarding() {
   function update(field, value) {
     setFormData(prev => ({ ...prev, [field]: value }));
   }
+  
+  // Consolidate signals into one map for simplicity or keep separate? 
+  // Requirement says "select checkboxes". We'll just map everything to selected_universal_signals for now 
+  // to avoid major backend refactors, OR we just treat everything as "signals" in the UI and save to `selected_universal_signals`.
+  // Let's use `selected_universal_signals` for ALL signals picked from the new categories to keep it simple.
+  
+  function toggleSignal(signal) {
+      setFormData(prev => ({
+          ...prev,
+          selected_universal_signals: {
+              ...prev.selected_universal_signals,
+              [signal]: !prev.selected_universal_signals[signal]
+          }
+      }));
+  }
 
   function handleArrayUpdate(field, index, value) {
     setFormData(prev => {
@@ -178,25 +207,7 @@ export default function Onboarding() {
       });
   }
 
-  function toggleSignal(type, signal) {
-      if (type === 'universal') {
-          setFormData(prev => ({
-              ...prev,
-              selected_universal_signals: {
-                  ...prev.selected_universal_signals,
-                  [signal]: !prev.selected_universal_signals[signal]
-              }
-          }));
-      } else {
-           setFormData(prev => ({
-              ...prev,
-              selected_business_signals: {
-                  ...prev.selected_business_signals,
-                  [signal]: !prev.selected_business_signals[signal]
-              }
-          }));
-      }
-  }
+
 
   function toggleRouting(level, channel) {
       // Check Plan for Slack
@@ -261,8 +272,7 @@ export default function Onboarding() {
      
      // construct final config
      const signals = [
-         ...Object.keys(formData.selected_universal_signals).filter(k=>formData.selected_universal_signals[k]),
-         ...Object.keys(formData.selected_business_signals).filter(k=>formData.selected_business_signals[k])
+         ...Object.keys(formData.selected_universal_signals).filter(k=>formData.selected_universal_signals[k])
      ];
      
      // Validate Alerts
@@ -333,6 +343,14 @@ export default function Onboarding() {
       });
   }
 
+  function handleConnectClick() {
+      // Validate before opening modal
+      const emails = formData.monitored_addresses.filter(x=>x.trim());
+      if(emails.length === 0) return setErr("Please add at least one email.");
+      setErr("");
+      setShowConsentModal(true);
+  }
+
   // --- Render ---
   
   const STEPS = [
@@ -349,6 +367,36 @@ export default function Onboarding() {
                     <h2 style={{marginTop:0, fontSize: 22}}>{modalContent.title}</h2>
                     <div style={{color:"#475569", margin:"20px 0"}}>{modalContent.body}</div>
                     <button onClick={()=>setModalContent(null)} style={primaryBtn}>Close</button>
+                </div>
+            </div>
+        )}
+
+        {/* CONSENT MODAL */}
+        {showConsentModal && (
+            <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center", zIndex: 999}}>
+                <div style={{background:"white", padding: 30, borderRadius: 16, maxWidth: 500, width:"100%", maxHeight:"80vh", display:"flex", flexDirection:"column"}}>
+                    <h2 style={{marginTop:0, fontSize: 22}}>Terms & Privacy</h2>
+                    <div style={{flex:1, overflowY:"auto", margin:"20px 0", border:"1px solid #e2e8f0", padding:16, borderRadius:8, background:"#f8fafc", fontSize:13, lineHeight:1.5}}>
+                        <p><strong>Terms of Service</strong></p>
+                        <p>By connecting your inbox, you agree to allow MailWise to scan your emails for specified signals. We only store metadata associated with alerts. We do not store email bodies permanently. MailWise is an assistance tool. We are not responsible for missed alerts.</p>
+                        <p><strong>Privacy Policy</strong></p>
+                        <p>We collect your email address and business details. Email processing happens in secure volatile memory. We use Google and Microsoft APIs strictly for the purpose of providing this service.</p>
+                    </div>
+                    
+                    <label style={{display:"flex", gap: 10, alignItems:"start", fontSize: 13, color:"#475569", marginBottom: 20}}>
+                        <input type="checkbox" checked={formData.compliance_accept} onChange={e=>update("compliance_accept", e.target.checked)} />
+                        <span>I have read and agree to the Terms of Service and Privacy Policy.</span>
+                    </label>
+                    
+                    <div style={{display:"flex", gap:12, justifyContent:"flex-end"}}>
+                         <button onClick={()=>setShowConsentModal(false)} style={secondaryBtn}>Cancel</button>
+                         <button onClick={()=>{
+                             if(!formData.compliance_accept) return alert("Please accept the terms.");
+                             startOnboarding();
+                         }} disabled={!formData.compliance_accept || loading} style={{...primaryBtn, opacity: formData.compliance_accept ? 1 : 0.5}}>
+                             {loading ? "Connecting..." : "Agree & Connect"}
+                         </button>
+                    </div>
                 </div>
             </div>
         )}
@@ -429,7 +477,7 @@ export default function Onboarding() {
                             <div style={{background:"#f1f5f9", padding: 16, borderRadius: 8}}>
                                 <div style={{fontSize: 12, fontWeight: 600, color:"#475569", marginBottom: 8, textTransform:"uppercase"}}>Included Signals for {formData.business_type}</div>
                                 <div style={{display:"flex", flexWrap:"wrap", gap: 8}}>
-                                    {(BUSINESS_SIGNALS[formData.business_type]||[]).map(s => (
+                                    {(SIGNAL_CATEGORIES.find(c=>c.id==='urgent')?.signals || []).map(s => (
                                         <span key={s} style={{background:"white", border:"1px solid #cbd5e1", padding:"4px 8px", borderRadius: 4, fontSize: 12, color:"#334155"}}>
                                             {s}
                                         </span>
@@ -444,48 +492,54 @@ export default function Onboarding() {
                         </div>
                     )}
 
-                    {/* --- STEP 2: Signals (Previously Step 3) --- */}
+                    {/* --- STEP 2: Signals (Accordion) --- */}
                     {step === 2 && (
                         <div>
-                           <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
-                                <h3 style={{fontSize: 16, fontWeight: 600, margin:0}}>Universal Signals</h3>
-                                <span style={{fontSize: 12, color:"#64748b", background:"#f1f5f9", padding:"2px 8px", borderRadius: 12}}>
-                                    {Object.values(formData.selected_universal_signals).filter(Boolean).length} Selected
-                                </span>
+                           <p style={{marginTop:0, marginBottom:20, color:"#64748b"}}>Select the signals you want MailWise to monitor.</p>
+                           <div style={{display:"grid", gap: 12}}>
+                               {SIGNAL_CATEGORIES.map(cat => {
+                                   const isOpen = activeAccordion === cat.id;
+                                   const selectedCount = cat.signals.filter(s => formData.selected_universal_signals[s]).length;
+                                   
+                                   return (
+                                       <div key={cat.id} style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"white"}}>
+                                           <div 
+                                               onClick={()=>setActiveAccordion(isOpen ? null : cat.id)}
+                                               style={{
+                                                   padding: 16, background: isOpen ? "#f8fafc" : "white", cursor:"pointer", 
+                                                   display:"flex", justifyContent:"space-between", alignItems:"center"
+                                               }}
+                                           >
+                                               <div style={{fontWeight: 600, color:"#1e293b"}}>{cat.label}</div>
+                                               <div style={{display:"flex", gap: 10, alignItems:"center"}}>
+                                                   {selectedCount > 0 && <span style={{fontSize: 11, background:"#eff6ff", color:"#2563eb", padding:"2px 8px", borderRadius: 12, fontWeight:600}}>{selectedCount}</span>}
+                                                   <span style={{color:"#94a3b8", fontSize: 12}}>{isOpen ? "▲" : "▼"}</span>
+                                               </div>
+                                           </div>
+                                           
+                                           {isOpen && (
+                                               <div style={{padding: 16, display:"grid", gridTemplateColumns:"1fr 1fr", gap: 12, borderTop:"1px solid #e2e8f0"}}>
+                                                   {cat.signals.map(s => (
+                                                       <label key={s} style={{
+                                                           display:"flex", alignItems:"center", gap: 10, padding: 8, borderRadius: 6,
+                                                           background: formData.selected_universal_signals[s] ? "#eff6ff" : "transparent",
+                                                           cursor: "pointer"
+                                                       }}>
+                                                           <input 
+                                                            type="checkbox" 
+                                                            checked={!!formData.selected_universal_signals[s]} 
+                                                            onChange={()=>toggleSignal(s)} 
+                                                            style={{accentColor: "#6D6CFB"}}
+                                                           />
+                                                           <span style={{textTransform:"capitalize", fontSize: 13, color:"#334155"}}>{s}</span>
+                                                       </label>
+                                                   ))}
+                                               </div>
+                                           )}
+                                       </div>
+                                   );
+                               })}
                            </div>
-                           <div style={{display:"grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24}}>
-                               {UNIVERSAL_SIGNALS.map(s => (
-                                   <label key={s} style={{
-                                       display:"flex", alignItems:"center", gap: 10, padding: 12, borderRadius: 8,
-                                       border: formData.selected_universal_signals[s] ? "1px solid #6D6CFB" : "1px solid #e2e8f0",
-                                       background: formData.selected_universal_signals[s] ? "#eff6ff" : "white",
-                                       cursor: "pointer"
-                                   }}>
-                                       <input type="checkbox" checked={!!formData.selected_universal_signals[s]} onChange={()=>toggleSignal('universal', s)} />
-                                       <span style={{textTransform:"capitalize"}}>{s}</span>
-                                   </label>
-                               ))}
-                           </div>
-                           
-                           <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
-                                <h3 style={{fontSize: 16, fontWeight: 600, margin:0}}>Business Signals ({formData.business_type})</h3>
-                                <span style={{fontSize: 12, color:"#64748b", background:"#f1f5f9", padding:"2px 8px", borderRadius: 12}}>
-                                    {Object.values(formData.selected_business_signals).filter(Boolean).length} Selected
-                                </span>
-                           </div>
-                           <div style={{display:"grid", gridTemplateColumns: "1fr 1fr", gap: 12}}>
-                                {(BUSINESS_SIGNALS[formData.business_type]||[]).map(s => (
-                                    <label key={s} style={{
-                                       display:"flex", alignItems:"center", gap: 10, padding: 12, borderRadius: 8,
-                                       border: formData.selected_business_signals[s] ? "1px solid #6D6CFB" : "1px solid #e2e8f0",
-                                       background: formData.selected_business_signals[s] ? "#eff6ff" : "white",
-                                       cursor: "pointer"
-                                   }}>
-                                       <input type="checkbox" checked={!!formData.selected_business_signals[s]} onChange={()=>toggleSignal('business', s)} />
-                                       <span style={{textTransform:"capitalize"}}>{s}</span>
-                                   </label>
-                                ))}
-                            </div>
                         </div>
                     )}
 
@@ -644,20 +698,7 @@ export default function Onboarding() {
                                 )}
                             </div>
                             
-                            {/* Terms Checkbox - Only show if not connected yet */}
-                            {!mailboxId && (
-                                <div style={{marginTop: 10}}>
-                                    <label style={{display:"flex", gap: 10, alignItems:"start", fontSize: 13, color:"#475569"}}>
-                                        <input type="checkbox" checked={formData.compliance_accept} onChange={e=>update("compliance_accept", e.target.checked)} />
-                                        <span>
-                                            I confirm I have authority to connect these inboxes and accept the 
-                                            <a href="#" onClick={e=>{e.preventDefault(); showTerms();}} style={{color:"#2563eb", margin:"0 4px"}}>Terms</a>
-                                             and 
-                                            <a href="#" onClick={e=>{e.preventDefault(); showPrivacy();}} style={{color:"#2563eb", margin:"0 4px"}}>Privacy Policy</a>.
-                                        </span>
-                                    </label>
-                                </div>
-                            )}
+                            {/* Terms Checkbox removed (now in modal) */}
 
                              {/* Success Message AFTER connecting */}
                             {mailboxId && (
@@ -678,7 +719,7 @@ export default function Onboarding() {
                                     <span style={{color:"#64748b", fontSize: 13}}>Signals Configured</span>
                                     <div style={{display:"flex", alignItems:"center", gap:8}}>
                                         <span style={{fontWeight: 500, fontSize: 13, textAlign:"right"}}>
-                                            {Object.values(formData.selected_universal_signals).filter(Boolean).length + Object.values(formData.selected_business_signals).filter(Boolean).length} Active
+                                            {Object.values(formData.selected_universal_signals).filter(Boolean).length} Active
                                         </span>
                                         <button onClick={()=>setStep(2)} style={{border:"none", background:"none", color:"#2563eb", cursor:"pointer", fontSize:12, textDecoration:"underline"}}>Edit</button>
                                     </div>
@@ -709,7 +750,7 @@ export default function Onboarding() {
                     
                     {/* Button Logic Updates for Step 4 */}
                     {step === 4 && !mailboxId ? (
-                         <button onClick={startOnboarding} disabled={loading} style={primaryBtn}>
+                         <button onClick={handleConnectClick} disabled={loading} style={primaryBtn}>
                              {loading ? "Connecting..." : "Connect Inboxes"}
                          </button>
                     ) : step === 5 ? (
