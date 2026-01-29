@@ -17,27 +17,26 @@ function dedupeWords(arr) {
 }
 
 // --- Constants ---
-const SIGNAL_CATEGORIES = [
-  {
-    id: "urgent",
-    label: "Urgent & High Priority",
-    signals: ["urgent", "complaint", "escalate", "emergency", "missed appointment", "late", "call me"]
-  },
-  {
-    id: "financial",
-    label: "Financial & Sales",
-    signals: ["quote", "refund", "churn", "cancel", "payment", "invoice"]
-  },
-  {
-    id: "cx",
-    label: "Customer Experience",
-    signals: ["item missing", "damaged", "poor service", "dietary", "room service", "check-in"]
-  },
-  {
-    id: "operational",
-    label: "Operational & Other",
-    signals: ["bug", "error", "login failed", "delivery", "reservation", "inquiry"]
-  }
+const RECOMMENDED_SIGNALS = [
+  { label: "Urgent Payment Requests", risk: "high" },
+  { label: "Subscription Cancellations", risk: "medium" },
+  { label: "Invoice Discrepancies", risk: "high" },
+  { label: "Customer Complaints", risk: "medium" },
+  { label: "Contract Termination Notices", risk: "high" }
+];
+
+const UNIVERSAL_SIGNALS = [
+  { label: "Phishing Threats", risk: "high" },
+  { label: "Account Compromises", risk: "high" },
+  { label: "Identity Theft Alerts", risk: "high" },
+  { label: "Sensitive Data Exposure", risk: "medium" },
+  { label: "Fraudulent Invoices", risk: "high" },
+  { label: "Wire Transfer Requests", risk: "medium" },
+  { label: "Supplier Impersonation Scams", risk: "medium" },
+  { label: "Suspicious Attachments", risk: "medium" },
+  { label: "Legal Threats", risk: "medium" },
+  { label: "Package Delivery Scams", risk: "medium" },
+  { label: "Invoice Refund Requests", risk: "medium" }
 ];
 
 const PRESETS = [
@@ -89,7 +88,7 @@ export default function Onboarding() {
   // Modal State
   const [modalContent, setModalContent] = useState(null); // { title: "", body: "" } or null
   const [showConsentModal, setShowConsentModal] = useState(false);
-  const [activeAccordion, setActiveAccordion] = useState("urgent"); // Default open category
+
 
   // --- Form State ---
   const [formData, setFormData] = useState({
@@ -175,13 +174,34 @@ export default function Onboarding() {
   // to avoid major backend refactors, OR we just treat everything as "signals" in the UI and save to `selected_universal_signals`.
   // Let's use `selected_universal_signals` for ALL signals picked from the new categories to keep it simple.
   
-  function toggleSignal(signal) {
+  function toggleUniversal(label) {
       setFormData(prev => ({
           ...prev,
           selected_universal_signals: {
               ...prev.selected_universal_signals,
-              [signal]: !prev.selected_universal_signals[signal]
+              [label]: !prev.selected_universal_signals[label]
           }
+      }));
+  }
+
+  function toggleBusiness(label) {
+      setFormData(prev => ({
+          ...prev,
+          selected_business_signals: {
+              ...prev.selected_business_signals,
+              [label]: !prev.selected_business_signals[label]
+          }
+      }));
+  }
+  
+  function toggleAllUniversal(select) {
+      const updates = {};
+      UNIVERSAL_SIGNALS.forEach(s => {
+          updates[s.label] = select;
+      });
+      setFormData(prev => ({
+          ...prev,
+          selected_universal_signals: updates
       }));
   }
 
@@ -272,7 +292,8 @@ export default function Onboarding() {
      
      // construct final config
      const signals = [
-         ...Object.keys(formData.selected_universal_signals).filter(k=>formData.selected_universal_signals[k])
+         ...Object.keys(formData.selected_universal_signals).filter(k=>formData.selected_universal_signals[k]),
+         ...Object.keys(formData.selected_business_signals).filter(k=>formData.selected_business_signals[k])
      ];
      
      // Validate Alerts
@@ -477,9 +498,9 @@ export default function Onboarding() {
                             <div style={{background:"#f1f5f9", padding: 16, borderRadius: 8}}>
                                 <div style={{fontSize: 12, fontWeight: 600, color:"#475569", marginBottom: 8, textTransform:"uppercase"}}>Included Signals for {formData.business_type}</div>
                                 <div style={{display:"flex", flexWrap:"wrap", gap: 8}}>
-                                    {(SIGNAL_CATEGORIES.find(c=>c.id==='urgent')?.signals || []).map(s => (
-                                        <span key={s} style={{background:"white", border:"1px solid #cbd5e1", padding:"4px 8px", borderRadius: 4, fontSize: 12, color:"#334155"}}>
-                                            {s}
+                                    {RECOMMENDED_SIGNALS.map(s => (
+                                        <span key={s.label} style={{background:"white", border:"1px solid #cbd5e1", padding:"4px 8px", borderRadius: 4, fontSize: 12, color:"#334155"}}>
+                                            {s.label}
                                         </span>
                                     ))}
                                 </div>
@@ -492,54 +513,73 @@ export default function Onboarding() {
                         </div>
                     )}
 
-                    {/* --- STEP 2: Signals (Accordion) --- */}
+                    {/* --- STEP 2: Signals (Risk Tags Layout) --- */}
                     {step === 2 && (
-                        <div>
-                           <p style={{marginTop:0, marginBottom:20, color:"#64748b"}}>Select the signals you want MailWise to monitor.</p>
-                           <div style={{display:"grid", gap: 12}}>
-                               {SIGNAL_CATEGORIES.map(cat => {
-                                   const isOpen = activeAccordion === cat.id;
-                                   const selectedCount = cat.signals.filter(s => formData.selected_universal_signals[s]).length;
-                                   
-                                   return (
-                                       <div key={cat.id} style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"white"}}>
-                                           <div 
-                                               onClick={()=>setActiveAccordion(isOpen ? null : cat.id)}
-                                               style={{
-                                                   padding: 16, background: isOpen ? "#f8fafc" : "white", cursor:"pointer", 
-                                                   display:"flex", justifyContent:"space-between", alignItems:"center"
-                                               }}
-                                           >
-                                               <div style={{fontWeight: 600, color:"#1e293b"}}>{cat.label}</div>
-                                               <div style={{display:"flex", gap: 10, alignItems:"center"}}>
-                                                   {selectedCount > 0 && <span style={{fontSize: 11, background:"#eff6ff", color:"#2563eb", padding:"2px 8px", borderRadius: 12, fontWeight:600}}>{selectedCount}</span>}
-                                                   <span style={{color:"#94a3b8", fontSize: 12}}>{isOpen ? "▲" : "▼"}</span>
-                                               </div>
-                                           </div>
-                                           
-                                           {isOpen && (
-                                               <div style={{padding: 16, display:"grid", gridTemplateColumns:"1fr 1fr", gap: 12, borderTop:"1px solid #e2e8f0"}}>
-                                                   {cat.signals.map(s => (
-                                                       <label key={s} style={{
-                                                           display:"flex", alignItems:"center", gap: 10, padding: 8, borderRadius: 6,
-                                                           background: formData.selected_universal_signals[s] ? "#eff6ff" : "transparent",
-                                                           cursor: "pointer"
-                                                       }}>
-                                                           <input 
-                                                            type="checkbox" 
-                                                            checked={!!formData.selected_universal_signals[s]} 
-                                                            onChange={()=>toggleSignal(s)} 
-                                                            style={{accentColor: "#6D6CFB"}}
-                                                           />
-                                                           <span style={{textTransform:"capitalize", fontSize: 13, color:"#334155"}}>{s}</span>
-                                                       </label>
-                                                   ))}
-                                               </div>
-                                           )}
-                                       </div>
-                                   );
-                               })}
+                        <div style={{display:"grid", gap: 30}}>
+                           
+                           {/* Recommended Section */}
+                           <div style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"#f8fafc"}}>
+                               <div style={{padding: 16, borderBottom:"1px solid #e2e8f0"}}>
+                                   <div style={{fontWeight: 700, fontSize: 16, color:"#1e293b", marginBottom: 4}}>Recommended Signals based on your business type</div>
+                                   <div style={{fontSize: 13, color:"#64748b"}}>Pre-selected based on your business. You can change these anytime.</div>
+                               </div>
+                               <div style={{background:"#eff6ff"}}>
+                                    {RECOMMENDED_SIGNALS.map((item, i) => {
+                                        const isLast = i === RECOMMENDED_SIGNALS.length - 1;
+                                        const checked = !!formData.selected_business_signals[item.label];
+                                        return (
+                                            <label key={item.label} style={{
+                                                display:"flex", alignItems:"center", gap: 12, padding: "12px 16px", cursor:"pointer",
+                                                borderBottom: isLast ? "none" : "1px solid #e2e8f0"
+                                            }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={checked} 
+                                                    onChange={()=>toggleBusiness(item.label)}
+                                                    style={{accentColor:"#2563eb", width: 16, height: 16}}
+                                                />
+                                                <span style={{fontSize: 14, fontWeight: 500, color:"#1e293b"}}>{item.label}</span>
+                                                <RiskBadge risk={item.risk} />
+                                            </label>
+                                        );
+                                    })}
+                               </div>
                            </div>
+                           
+                           {/* Universal Section */}
+                           <div style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"white"}}>
+                               <div style={{padding: 16, borderBottom:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                                   <div style={{fontWeight: 700, fontSize: 16, color:"#1e293b"}}>Universal Signals</div>
+                                   <div style={{fontSize: 13, display:"flex", gap: 12}}>
+                                       <button onClick={()=>toggleAllUniversal(true)} style={{border:"none", background:"none", color:"#2563eb", cursor:"pointer", fontWeight:500}}>Select All</button>
+                                       <span style={{color:"#cbd5e1"}}>|</span>
+                                       <button onClick={()=>toggleAllUniversal(false)} style={{border:"none", background:"none", color:"#2563eb", cursor:"pointer", fontWeight:500}}>Clear</button>
+                                   </div>
+                               </div>
+                               <div>
+                                    {UNIVERSAL_SIGNALS.map((item, i) => {
+                                        const isLast = i === UNIVERSAL_SIGNALS.length - 1;
+                                        const checked = !!formData.selected_universal_signals[item.label];
+                                        return (
+                                            <label key={item.label} style={{
+                                                display:"flex", alignItems:"center", gap: 12, padding: "12px 16px", cursor:"pointer",
+                                                borderBottom: isLast ? "none" : "1px solid #e2e8f0",
+                                                background: checked ? "#f8fafc" : "white"
+                                            }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={checked} 
+                                                    onChange={()=>toggleUniversal(item.label)}
+                                                    style={{accentColor:"#ef4444", width: 16, height: 16}}
+                                                />
+                                                <span style={{fontSize: 14, fontWeight: 500, color:"#1e293b"}}>{item.label}</span>
+                                                <RiskBadge risk={item.risk} />
+                                            </label>
+                                        );
+                                    })}
+                               </div>
+                           </div>
+
                         </div>
                     )}
 
@@ -719,7 +759,7 @@ export default function Onboarding() {
                                     <span style={{color:"#64748b", fontSize: 13}}>Signals Configured</span>
                                     <div style={{display:"flex", alignItems:"center", gap:8}}>
                                         <span style={{fontWeight: 500, fontSize: 13, textAlign:"right"}}>
-                                            {Object.values(formData.selected_universal_signals).filter(Boolean).length} Active
+                                            {Object.values(formData.selected_universal_signals).filter(Boolean).length + Object.values(formData.selected_business_signals).filter(Boolean).length} Active
                                         </span>
                                         <button onClick={()=>setStep(2)} style={{border:"none", background:"none", color:"#2563eb", cursor:"pointer", fontSize:12, textDecoration:"underline"}}>Edit</button>
                                     </div>
@@ -791,4 +831,14 @@ function Row({label, val}) {
             <span style={{fontWeight: 500, fontSize: 13, textAlign:"right"}}>{val}</span>
         </div>
     );
+}
+
+function RiskBadge({risk}) {
+    if(risk === 'high') {
+         return <span style={{fontSize: 11, fontWeight: 600, color:"white", background:"#ef4444", padding:"2px 8px", borderRadius: 4}}>High Risk</span>;
+    }
+    if(risk === 'medium') {
+         return <span style={{fontSize: 11, fontWeight: 600, color:"#78350f", background:"#fcd34d", padding:"2px 8px", borderRadius: 4}}>Medium Risk</span>;
+    }
+    return null;
 }
