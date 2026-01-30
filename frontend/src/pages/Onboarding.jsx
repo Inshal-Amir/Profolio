@@ -518,49 +518,21 @@ export default function Onboarding() {
                     {step === 2 && (
                         <div>
                            <p style={{marginTop:0, marginBottom:20, color:"#64748b"}}>Select the signals you want MailWise to monitor.</p>
+                           
+                           {/* Recommended Section */}
+                           <h3 style={{fontSize: 14, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12}}>Recommended</h3>
+                           <div style={{display:"grid", gap: 12, marginBottom: 24}}>
+                               {SIGNAL_CATEGORIES.filter(c => ["urgent", "financial"].includes(c.id)).map(cat => (
+                                   <SignalCategory key={cat.id} cat={cat} formData={formData} activeAccordion={activeAccordion} setActiveAccordion={setActiveAccordion} toggleSignal={toggleSignal} />
+                               ))}
+                           </div>
+
+                           {/* Universal Section */}
+                           <h3 style={{fontSize: 14, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12}}>Universal</h3>
                            <div style={{display:"grid", gap: 12}}>
-                               {SIGNAL_CATEGORIES.map(cat => {
-                                   const isOpen = activeAccordion === cat.id;
-                                   const selectedCount = cat.signals.filter(s => formData.selected_universal_signals[s.label]).length;
-                                   
-                                   return (
-                                       <div key={cat.id} style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"white"}}>
-                                           <div 
-                                               onClick={()=>setActiveAccordion(isOpen ? null : cat.id)}
-                                               style={{
-                                                   padding: 16, background: isOpen ? "#f8fafc" : "white", cursor:"pointer", 
-                                                   display:"flex", justifyContent:"space-between", alignItems:"center"
-                                               }}
-                                           >
-                                               <div style={{fontWeight: 600, color:"#1e293b"}}>{cat.label}</div>
-                                               <div style={{display:"flex", gap: 10, alignItems:"center"}}>
-                                                   {selectedCount > 0 && <span style={{fontSize: 11, background:"#eff6ff", color:"#2563eb", padding:"2px 8px", borderRadius: 12, fontWeight:600}}>{selectedCount}</span>}
-                                                   <span style={{color:"#94a3b8", fontSize: 12}}>{isOpen ? "▲" : "▼"}</span>
-                                               </div>
-                                           </div>
-                                           
-                                           {isOpen && (
-                                               <div style={{padding: 16, display:"grid", gridTemplateColumns:"1fr", gap: 0, borderTop:"1px solid #e2e8f0"}}>
-                                                   {cat.signals.map((s, idx) => (
-                                                       <label key={s.label} style={{
-                                                           display:"flex", alignItems:"center", gap: 12, padding: "10px 8px", cursor: "pointer",
-                                                           borderBottom: idx < cat.signals.length -1 ? "1px solid #f1f5f9" : "none"
-                                                       }}>
-                                                           <input 
-                                                            type="checkbox" 
-                                                            checked={!!formData.selected_universal_signals[s.label]} 
-                                                            onChange={()=>toggleSignal(s.label)} 
-                                                            style={{accentColor: "#6D6CFB", width: 16, height: 16}}
-                                                           />
-                                                           <span style={{fontSize: 14, color:"#334155", flex:1}}>{s.label}</span>
-                                                           <RiskBadge risk={s.risk} />
-                                                       </label>
-                                                   ))}
-                                               </div>
-                                           )}
-                                       </div>
-                                   );
-                               })}
+                               {SIGNAL_CATEGORIES.filter(c => !["urgent", "financial"].includes(c.id)).map(cat => (
+                                   <SignalCategory key={cat.id} cat={cat} formData={formData} activeAccordion={activeAccordion} setActiveAccordion={setActiveAccordion} toggleSignal={toggleSignal} />
+                               ))}
                            </div>
                         </div>
                     )}
@@ -823,4 +795,46 @@ function RiskBadge({risk}) {
          return <span style={{fontSize: 11, fontWeight: 600, color:"#78350f", background:"#fcd34d", padding:"2px 8px", borderRadius: 4}}>Medium Risk</span>;
     }
     return null;
+}
+function SignalCategory({cat, formData, activeAccordion, setActiveAccordion, toggleSignal}) {
+   const isOpen = activeAccordion === cat.id;
+   const selectedCount = cat.signals.filter(s => formData.selected_universal_signals[s.label]).length;
+
+   return (
+       <div style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"white"}}>
+           <div 
+               onClick={()=>setActiveAccordion(isOpen ? null : cat.id)}
+               style={{
+                   padding: 16, background: isOpen ? "#f8fafc" : "white", cursor:"pointer", 
+                   display:"flex", justifyContent:"space-between", alignItems:"center"
+               }}
+           >
+               <div style={{fontWeight: 600, color:"#1e293b"}}>{cat.label}</div>
+               <div style={{display:"flex", gap: 10, alignItems:"center"}}>
+                   {selectedCount > 0 && <span style={{fontSize: 11, background:"#eff6ff", color:"#2563eb", padding:"2px 8px", borderRadius: 12, fontWeight:600}}>{selectedCount}</span>}
+                   <span style={{color:"#94a3b8", fontSize: 12}}>{isOpen ? "▲" : "▼"}</span>
+               </div>
+           </div>
+           
+           {isOpen && (
+               <div style={{padding: 16, display:"grid", gridTemplateColumns:"1fr", gap: 0, borderTop:"1px solid #e2e8f0"}}>
+                   {cat.signals.map((s, idx) => (
+                       <label key={s.label} style={{
+                           display:"flex", alignItems:"center", gap: 12, padding: "10px 8px", cursor: "pointer",
+                           borderBottom: idx < cat.signals.length -1 ? "1px solid #f1f5f9" : "none"
+                       }}>
+                           <input 
+                            type="checkbox" 
+                            checked={!!formData.selected_universal_signals[s.label]} 
+                            onChange={()=>toggleSignal(s.label)} 
+                            style={{accentColor: "#6D6CFB", width: 16, height: 16}}
+                           />
+                           <span style={{fontSize: 14, color:"#334155", flex:1}}>{s.label}</span>
+                           <RiskBadge risk={s.risk} />
+                       </label>
+                   ))}
+               </div>
+           )}
+       </div>
+   );
 }
