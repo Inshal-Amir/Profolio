@@ -156,7 +156,7 @@ app.get("/api/oauth/dispatch", (req, res) => {
 
   if(!onboarding.pending_emails || onboarding.pending_emails.length === 0) {
      // ALL DONE with OAuth
-     return res.redirect(`${FRONTEND_BASE_URL}/onboarding?step=4&mailbox_id=${encodeURIComponent(mailbox_id)}`);
+     return res.redirect(`${FRONTEND_BASE_URL}/onboarding?step=3&mailbox_id=${encodeURIComponent(mailbox_id)}`);
   }
 
   const nextEmail = onboarding.pending_emails[0];
@@ -455,7 +455,7 @@ async function handleCallback(req, res, providerName) {
          return res.redirect(`/api/oauth/dispatch?${qp}`);
     } else {
         // ALL DONE -> Return to Frontend Wizard Step 2 (which will auto advance to 3)
-         return res.redirect(`${FRONTEND_BASE_URL}/onboarding?step=4&mailbox_id=${encodeURIComponent(mailbox_id)}`);
+         return res.redirect(`${FRONTEND_BASE_URL}/onboarding?step=3&mailbox_id=${encodeURIComponent(mailbox_id)}`);
     }
 
   } catch(e) {
