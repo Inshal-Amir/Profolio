@@ -17,33 +17,60 @@ function dedupeWords(arr) {
 }
 
 // --- Constants ---
-const RECOMMENDED_SIGNALS = [
-    { label: "Urgent Payment Requests", risk: "high" },
-    { label: "Subscription Cancellations", risk: "medium" },
-    { label: "Invoice Discrepancies", risk: "high" },
-    { label: "Customer Complaints", risk: "medium" },
-    { label: "Contract Termination Notices", risk: "high" }
+const UNIVERSAL_SIGNALS = [
+    { id: "U01", label: "Chargeback / Payment Dispute Intent", risk: "high" },
+    { id: "U02", label: "Legal Action / Court Threat", risk: "high" },
+    { id: "U03", label: "Regulator / Authority Mention", risk: "high" },
+    { id: "U04", label: "Refund Ultimatum / Escalation", risk: "high" },
+    { id: "U05", label: "Cancellation Ultimatum", risk: "medium" },
+    { id: "U06", label: "Reputation Threat (Reviews / Social)", risk: "high" },
+    { id: "U07", label: "Abusive / Threatening Language", risk: "high" },
+    { id: "U08", label: "Urgency / Deadline Language", risk: "medium" },
+    { id: "U09", label: "No Response / Repeated Chasers", risk: "medium" },
+    { id: "U10", label: "Executive / VIP Escalation", risk: "high" },
+    { id: "U11", label: "Data Privacy / Subject Access / Deletion", risk: "high" }
 ];
 
-const UNIVERSAL_SIGNALS = [
-    { label: "Phishing Threats", risk: "high" },
-    { label: "Account Compromises", risk: "high" },
-    { label: "Identity Theft Alerts", risk: "high" },
-    { label: "Sensitive Data Exposure", risk: "medium" },
-    { label: "Fraudulent Invoices", risk: "high" },
-    { label: "Wire Transfer Requests", risk: "medium" },
-    { label: "Supplier Impersonation Scams", risk: "medium" },
-    { label: "Suspicious Attachments", risk: "medium" },
-    { label: "Legal Threats", risk: "medium" },
-    { label: "Package Delivery Scams", risk: "medium" },
-    { label: "Invoice Refund Requests", risk: "medium" }
-];
+const PROFILE_SIGNALS = {
+    ecommerce: [
+        { id: "E01", label: "Non-delivery / Missing Parcel", risk: "medium" },
+        { id: "E02", label: "Damaged / Wrong Item / Missing Items", risk: "medium" },
+        { id: "E03", label: "Tracking / Courier Escalation", risk: "medium" },
+        { id: "E04", label: "Return Label / RMA / Return Window", risk: "medium" }, // averaged low/medium to medium for simplicity per user default rules
+        { id: "E05", label: "Refund Delay", risk: "medium" },
+        { id: "E06", label: "Subscription Cancellation / Renewal Complaint", risk: "medium" },
+        { id: "E07", label: "Fraud / Unauthorised Transaction", risk: "high" }
+    ],
+    service: [
+        { id: "S01", label: "No Show / Missed Appointment", risk: "medium" },
+        { id: "S02", label: "Late / Repeated Delays", risk: "medium" },
+        { id: "S03", label: "Work Not Fixed / Poor Workmanship", risk: "medium" },
+        { id: "S04", label: "Property Damage / Insurance Claim Threat", risk: "high" },
+        { id: "S05", label: "Deposit Refund / Cancellation Dispute", risk: "medium" },
+        { id: "S06", label: "Invoice Dispute / Overcharged", risk: "medium" },
+        { id: "S07", label: "Safety / Compliance Allegations", risk: "high" }
+    ],
+    saas: [ // Mapping Agency / B2B to 'saas' preset
+        { id: "A01", label: "Termination / Churn Signals", risk: "high" },
+        { id: "A02", label: "Breach / SLA / Missed Deadline", risk: "high" },
+        { id: "A03", label: "Out of Scope / Scope Dispute", risk: "medium" },
+        { id: "A04", label: "Invoice Dispute / Non-payment", risk: "high" },
+        { id: "A05", label: "Stakeholder Escalation", risk: "high" }
+    ],
+    bookings_hospitality: [
+        { id: "B01", label: "Cancellation / Refund Request", risk: "medium" },
+        { id: "B02", label: "Double Charged / Billing Error", risk: "high" },
+        { id: "B03", label: "No-show Fee Dispute", risk: "medium" },
+        { id: "B04", label: "Serious Experience Complaint", risk: "high" },
+        { id: "B05", label: "Injury / Incident Report", risk: "high" }
+    ]
+};
 
 const PRESETS = [
-    { label: "Trades/Services", value: "service" },
-    { label: "Ecommerce", value: "ecommerce" },
-    { label: "SaaS", value: "saas" },
-    { label: "Bookings/Hospitality", value: "bookings_hospitality" }
+    { label: "Ecommerce / DTC", value: "ecommerce" },
+    { label: "Service Trades", value: "service" },
+    { label: "Agency / B2B Services", value: "saas" },
+    { label: "Bookings & Hospitality", value: "bookings_hospitality" }
 ];
 
 const EXT_COUNTRIES = [
@@ -166,14 +193,15 @@ export default function Onboarding() {
 
 
   // --- Handlers ---
+  // --- Derived State ---
+  const activeRecommendedSignals = useMemo(() => {
+      return PROFILE_SIGNALS[formData.business_type] || PROFILE_SIGNALS["service"];
+  }, [formData.business_type]);
+
+  // --- Handlers ---
   function update(field, value) {
     setFormData(prev => ({ ...prev, [field]: value }));
   }
-  
-  // Consolidate signals into one map for simplicity or keep separate? 
-  // Requirement says "select checkboxes". We'll just map everything to selected_universal_signals for now 
-  // to avoid major backend refactors, OR we just treat everything as "signals" in the UI and save to `selected_universal_signals`.
-  // Let's use `selected_universal_signals` for ALL signals picked from the new categories to keep it simple.
   
   function toggleSignal(label) {
       setFormData(prev => ({
@@ -206,8 +234,6 @@ export default function Onboarding() {
           return { ...prev, [field]: arr.length ? arr : [""] };
       });
   }
-
-
 
   function toggleRouting(level, channel) {
       // Check Plan for Slack
@@ -478,7 +504,7 @@ export default function Onboarding() {
                                 <div style={{fontSize: 12, fontWeight: 600, color:"#475569", marginBottom: 8, textTransform:"uppercase"}}>Included Signals for {formData.business_type}</div>
                                 <div style={{display:"flex", flexWrap:"wrap", gap: 8}}>
                                     {/* Just showing a flat list of some signals for preview */ }
-                                    {RECOMMENDED_SIGNALS.slice(0,3).map(s => (
+                                    {activeRecommendedSignals.slice(0,3).map(s => (
                                         <span key={s.label} style={{background:"white", border:"1px solid #cbd5e1", padding:"4px 8px", borderRadius: 4, fontSize: 12, color:"#334155"}}>
                                             {s.label}
                                         </span>
@@ -510,10 +536,10 @@ export default function Onboarding() {
                                    Pre-selected based on your business. You can change these anytime.
                                </div>
                                <div style={{background: "#eff6ff"}}>
-                                    {RECOMMENDED_SIGNALS.map((s, idx) => (
+                                    {activeRecommendedSignals.map((s, idx) => (
                                         <label key={s.label} style={{
                                             display:"flex", alignItems:"center", gap: 12, padding: "12px 16px", cursor: "pointer",
-                                            borderBottom: idx < RECOMMENDED_SIGNALS.length - 1 ? "1px solid #dae4f3" : "none",
+                                            borderBottom: idx < activeRecommendedSignals.length - 1 ? "1px solid #dae4f3" : "none",
                                             background: !!formData.selected_universal_signals[s.label] ? "#eff6ff" : "white"
                                         }}>
                                            <div style={{
@@ -600,11 +626,12 @@ export default function Onboarding() {
                            </div>
                            
                            <div style={{textAlign:"right", marginTop: 12, fontSize: 13, color: "#64748b", fontWeight: 500}}>
-                                Selected: <strong style={{color:"#0f172a"}}>{Object.values(formData.selected_universal_signals).filter(Boolean).length}</strong> / {RECOMMENDED_SIGNALS.length + UNIVERSAL_SIGNALS.length} signals
+                                Selected: <strong style={{color:"#0f172a"}}>{Object.values(formData.selected_universal_signals).filter(Boolean).length}</strong> / {activeRecommendedSignals.length + UNIVERSAL_SIGNALS.length} signals
                            </div>
 
                         </div>
                     )}
+
 
                     {/* --- STEP 3: Routes (Previously Step 4) --- */}
                     {step === 3 && (
