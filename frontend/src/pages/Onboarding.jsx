@@ -17,28 +17,48 @@ function dedupeWords(arr) {
 }
 
 // --- Constants ---
-const RECOMMENDED_SIGNALS = [
-    { label: "Urgent Payment Requests", risk: "high" },
-    { label: "Subscription Cancellations", risk: "medium" },
-    { label: "Invoice Discrepancies", risk: "high" },
-    { label: "Customer Complaints", risk: "medium" },
-    { label: "Contract Termination Notices", risk: "high" }
+const SIGNAL_CATEGORIES = [
+  {
+    id: "urgent",
+    label: "Urgent & Security",
+    signals: [
+        { label: "Phishing Threats", risk: "high" },
+        { label: "Account Compromises", risk: "high" },
+        { label: "Identity Theft Alerts", risk: "high" },
+        { label: "Supplier Impersonation Scams", risk: "medium" },
+        { label: "Suspicious Attachments", risk: "medium" },
+        { label: "Sensitive Data Exposure", risk: "medium" }
+    ]
+  },
+  {
+    id: "financial",
+    label: "Financial & Sales",
+    signals: [
+        { label: "Urgent Payment Requests", risk: "high" },
+        { label: "Invoice Discrepancies", risk: "high" },
+        { label: "Fraudulent Invoices", risk: "high" },
+        { label: "Wire Transfer Requests", risk: "medium" },
+        { label: "Invoice Refund Requests", risk: "medium" },
+        { label: "Subscription Cancellations", risk: "medium" }
+    ]
+  },
+  {
+    id: "legal",
+    label: "Business & Legal",
+    signals: [
+        { label: "Contract Termination Notices", risk: "high" },
+        { label: "Legal Threats", risk: "medium" }
+    ]
+  },
+  {
+    id: "cx",
+    label: "Operational & CX",
+    signals: [
+        { label: "Customer Complaints", risk: "medium" },
+        { label: "Package Delivery Scams", risk: "medium" }
+    ]
+  }
 ];
-
-const UNIVERSAL_SIGNALS = [
-    { label: "Phishing Threats", risk: "high" },
-    { label: "Account Compromises", risk: "high" },
-    { label: "Identity Theft Alerts", risk: "high" },
-    { label: "Sensitive Data Exposure", risk: "medium" },
-    { label: "Fraudulent Invoices", risk: "high" },
-    { label: "Wire Transfer Requests", risk: "medium" },
-    { label: "Supplier Impersonation Scams", risk: "medium" },
-    { label: "Suspicious Attachments", risk: "medium" },
-    { label: "Legal Threats", risk: "medium" },
-    { label: "Package Delivery Scams", risk: "medium" },
-    { label: "Invoice Refund Requests", risk: "medium" }
-];
-
 
 const PRESETS = [
     { label: "Trades/Services", value: "service" },
@@ -252,6 +272,9 @@ export default function Onboarding() {
         const res = await postJSON("/onboarding/start", payload);
         if (!res.mailbox_id) throw new Error("No ID returned");
         
+        setMailboxId(res.mailbox_id);
+        setOrgId(res.org_id);
+        
         // Save state immediately
         localStorage.setItem(`onboarding_${res.mailbox_id}`, JSON.stringify(formData));
         
@@ -352,7 +375,7 @@ export default function Onboarding() {
   // --- Render ---
   
   const STEPS = [
-      "Business Information", "Signals", "Connect Inbox", "Review"
+      "Business Information", "Signals", "Routes", "Connect Inbox", "Review"
   ];
 
   return (
@@ -460,7 +483,6 @@ export default function Onboarding() {
                     {/* --- STEP 1: Business Information --- */}
                     {step === 1 && (
                         <div style={{display:"grid", gap: 20}}>
-                             <h2 style={{fontSize: 18, fontWeight: 600, margin: 0, color: "#1e293b"}}>A few details to set up Mailwise for your business.</h2>
                              <label style={{display:"block"}}>
                                 <span style={{display:"block", fontSize: 13, fontWeight: 600, marginBottom: 6}}>Company Name</span>
                                 <input style={inputStyle} value={formData.company_name} onChange={e=>update("company_name", e.target.value)} placeholder="Acme Inc."/>
@@ -477,7 +499,7 @@ export default function Onboarding() {
                                 <div style={{fontSize: 12, fontWeight: 600, color:"#475569", marginBottom: 8, textTransform:"uppercase"}}>Included Signals for {formData.business_type}</div>
                                 <div style={{display:"flex", flexWrap:"wrap", gap: 8}}>
                                     {/* Just showing a flat list of some signals for preview */ }
-                                    {RECOMMENDED_SIGNALS.slice(0,3).map(s => (
+                                    {SIGNAL_CATEGORIES[0].signals.slice(0,3).map(s => (
                                         <span key={s.label} style={{background:"white", border:"1px solid #cbd5e1", padding:"4px 8px", borderRadius: 4, fontSize: 12, color:"#334155"}}>
                                             {s.label}
                                         </span>
@@ -492,82 +514,181 @@ export default function Onboarding() {
                         </div>
                     )}
 
-                    {/* --- STEP 2: Signals (Replaced with Flat Lists) --- */}
+                    {/* --- STEP 2: Signals (Accordion + Risk Tags) --- */}
                     {step === 2 && (
                         <div>
-                           <p style={{marginTop:0, marginBottom:20, color:"#64748b"}}>Tell us which messages matter most</p>
-                           
-                           {/* Recommended Section */}
-                           <div style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"white", marginBottom: 24}}>
-                                <div style={{padding: "12px 16px", background: "#f8fafc", borderBottom:"1px solid #e2e8f0"}}>
-                                    <div style={{fontWeight: 600, color:"#1e293b", fontSize: 14}}>Recommended Signals based on your business type</div>
-                                    <div style={{fontSize: 12, color:"#64748b", marginTop: 4}}>Pre-selected based on your business. You can change these anytime.</div>
-                                </div>
-                                <div style={{padding: "4px 0"}}>
-                                    {RECOMMENDED_SIGNALS.map((s, idx) => (
-                                        <label key={s.label} style={{
-                                            display:"flex", alignItems:"center", gap: 12, padding: "10px 16px", cursor: "pointer",
-                                            borderBottom: idx < RECOMMENDED_SIGNALS.length -1 ? "1px solid #f1f5f9" : "none",
-                                            background: idx % 2 === 0 ? "#eff6ff" : "white" // Slight stripe effect as per image? No, image has blue bg for recommended.
-                                        }}>
-                                             <div style={{flex:1, display:"flex", alignItems:"center", gap: 12}}>
-                                                 <input 
-                                                  type="checkbox" 
-                                                  checked={!!formData.selected_universal_signals[s.label]} 
-                                                  onChange={()=>toggleSignal(s.label)} 
-                                                  style={{accentColor: "#2563eb", width: 18, height: 18}}
-                                                 />
-                                                 <span style={{fontSize: 14, color:"#334155", fontWeight: 500}}>{s.label}</span>
-                                                 <RiskBadge risk={s.risk} />
-                                             </div>
-                                        </label>
-                                    ))}
-                                </div>
+                           <p style={{marginTop:0, marginBottom:20, color:"#64748b"}}>Select the signals you want MailWise to monitor.</p>
+                           <div style={{display:"grid", gap: 12}}>
+                               {SIGNAL_CATEGORIES.map(cat => {
+                                   const isOpen = activeAccordion === cat.id;
+                                   const selectedCount = cat.signals.filter(s => formData.selected_universal_signals[s.label]).length;
+                                   
+                                   return (
+                                       <div key={cat.id} style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"white"}}>
+                                           <div 
+                                               onClick={()=>setActiveAccordion(isOpen ? null : cat.id)}
+                                               style={{
+                                                   padding: 16, background: isOpen ? "#f8fafc" : "white", cursor:"pointer", 
+                                                   display:"flex", justifyContent:"space-between", alignItems:"center"
+                                               }}
+                                           >
+                                               <div style={{fontWeight: 600, color:"#1e293b"}}>{cat.label}</div>
+                                               <div style={{display:"flex", gap: 10, alignItems:"center"}}>
+                                                   {selectedCount > 0 && <span style={{fontSize: 11, background:"#eff6ff", color:"#2563eb", padding:"2px 8px", borderRadius: 12, fontWeight:600}}>{selectedCount}</span>}
+                                                   <span style={{color:"#94a3b8", fontSize: 12}}>{isOpen ? "▲" : "▼"}</span>
+                                               </div>
+                                           </div>
+                                           
+                                           {isOpen && (
+                                               <div style={{padding: 16, display:"grid", gridTemplateColumns:"1fr", gap: 0, borderTop:"1px solid #e2e8f0"}}>
+                                                   {cat.signals.map((s, idx) => (
+                                                       <label key={s.label} style={{
+                                                           display:"flex", alignItems:"center", gap: 12, padding: "10px 8px", cursor: "pointer",
+                                                           borderBottom: idx < cat.signals.length -1 ? "1px solid #f1f5f9" : "none"
+                                                       }}>
+                                                           <input 
+                                                            type="checkbox" 
+                                                            checked={!!formData.selected_universal_signals[s.label]} 
+                                                            onChange={()=>toggleSignal(s.label)} 
+                                                            style={{accentColor: "#6D6CFB", width: 16, height: 16}}
+                                                           />
+                                                           <span style={{fontSize: 14, color:"#334155", flex:1}}>{s.label}</span>
+                                                           <RiskBadge risk={s.risk} />
+                                                       </label>
+                                                   ))}
+                                               </div>
+                                           )}
+                                       </div>
+                                   );
+                               })}
                            </div>
-
-                           {/* Universal Section */}
-                           <div style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background:"white"}}>
-                                <div style={{padding: "12px 16px", background: "#fff", borderBottom:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-                                    <div style={{fontWeight: 600, color:"#1e293b", fontSize: 14}}>Universal Signals</div>
-                                    <div style={{display:"flex", gap: 8}}>
-                                        <button onClick={()=>{
-                                            const all = {};
-                                            UNIVERSAL_SIGNALS.forEach(s => all[s.label] = true);
-                                            RECOMMENDED_SIGNALS.forEach(s => all[s.label] = true);
-                                            setFormData(p => ({...p, selected_universal_signals: all}));
-                                        }} style={{fontSize: 12, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>Select All</button>
-                                        <span style={{color:"#e2e8f0"}}>|</span>
-                                        <button onClick={()=>{
-                                            setFormData(p => ({...p, selected_universal_signals: {}}));
-                                        }} style={{fontSize: 12, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>Clear</button>
-                                    </div>
-                                </div>
-                                <div style={{padding: "4px 0"}}>
-                                    {UNIVERSAL_SIGNALS.map((s, idx) => (
-                                        <label key={s.label} style={{
-                                            display:"flex", alignItems:"center", gap: 12, padding: "10px 16px", cursor: "pointer",
-                                            borderBottom: idx < UNIVERSAL_SIGNALS.length -1 ? "1px solid #f1f5f9" : "none"
-                                        }}>
-                                             <div style={{flex:1, display:"flex", alignItems:"center", gap: 12}}>
-                                                 <input 
-                                                  type="checkbox" 
-                                                  checked={!!formData.selected_universal_signals[s.label]} 
-                                                  onChange={()=>toggleSignal(s.label)} 
-                                                  style={{accentColor: "#ef4444", width: 18, height: 18}}
-                                                 />
-                                                 <span style={{fontSize: 14, color:"#334155"}}>{s.label}</span>
-                                                 <RiskBadge risk={s.risk} />
-                                             </div>
-                                        </label>
-                                    ))}
-                                </div>
-                           </div>
-
                         </div>
                     )}
 
-                    {/* --- STEP 3: Connect Inbox (Previously Step 4) --- */}
+                    {/* --- STEP 3: Routes (Previously Step 4) --- */}
                     {step === 3 && (
+                        <div style={{display:"grid", gap: 24}}>
+                            
+                            {/* Alert Channels */}
+                            <div style={{padding: 20, background:"#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                                <label style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: formData.whatsapp_enabled ? 16 : 0}}>
+                                    <div style={{fontWeight: 600}}>WhatsApp Alerts</div>
+                                    <input type="checkbox" checked={formData.whatsapp_enabled} onChange={e=>update("whatsapp_enabled", e.target.checked)}/>
+                                </label>
+                                
+                                {formData.whatsapp_enabled && (
+                                    <div style={{display:"grid", gap: 10}}>
+                                        {formData.whatsapp_numbers.map((num, i) => (
+                                            <div key={i} style={{display:"flex", gap: 8}}>
+                                                <select style={{...inputStyle, width: 80}}>
+                                                    {EXT_COUNTRIES.map(c => <option key={c.code}>{c.code} {c.flag}</option>)}
+                                                </select>
+                                                <input 
+                                                    style={{...inputStyle, flex:1, width: "auto"}} 
+                                                    value={num} 
+                                                    onChange={e=>handleArrayUpdate("whatsapp_numbers", i, e.target.value)} 
+                                                    placeholder="7123456789"
+                                                />
+                                            </div>
+                                        ))}
+                                        <div style={{display:"flex", gap:12}}>
+                                             <button onClick={()=>addArrayItem("whatsapp_numbers")} style={{fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>+ Add Number</button>
+                                             <button onClick={()=>alert("Test Alert Sent!")} style={{fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>Send Test Alert &rarr;</button>
+                                        </div>
+                                       
+                                        <label style={{display:"flex", gap: 8, fontSize: 12, marginTop: 8}}>
+                                            <input type="checkbox" checked={formData.whatsapp_consent} onChange={e=>update("whatsapp_consent", e.target.checked)} />
+                                            I consent to receive WhatsApp alerts.
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Slack Section -- CONDITIONAL */}
+                             {PLAN_FEATURES.slack_integration && (
+                                <div style={{padding: 20, background: "#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                                    <label style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: formData.slack_enabled ? 16 : 0}}>
+                                        <div style={{fontWeight: 600}}>
+                                            Slack Alerts 
+                                        </div>
+                                        <input type="checkbox" checked={formData.slack_enabled} onChange={e=>update("slack_enabled", e.target.checked)} />
+                                    </label>
+                                    
+                                    {formData.slack_enabled && (
+                                         <div style={{display:"grid", gap: 10}}>
+                                            {formData.slack_urls.map((v,i)=>(
+                                                <div key={i} style={{display:"flex", gap: 8}}>
+                                                    <input value={v} onChange={e=>handleArrayUpdate("slack_urls", i, e.target.value)} placeholder="https://hooks.slack.com/..." style={inputStyle}/>
+                                                    <button onClick={()=>removeArrayItem("slack_urls", i)} style={{color:"#ef4444", background:"none", border:"none", cursor:"pointer"}}>✕</button>
+                                                </div>
+                                            ))}
+                                            <button onClick={()=>addArrayItem("slack_urls")} style={{width:"fit-content", fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>+ Add URL</button>
+                                        </div>
+                                    )}
+                                </div>
+                             )}
+
+                            {/* Routing */}
+                             <div style={{padding: 20, background:"#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                                 <h4 style={{marginTop:0, marginBottom:16}}>Routing Logic</h4>
+                                 
+                                 <div style={{display:"grid", gap: 16}}>
+                                     <div style={{display:"grid", gridTemplateColumns:"100px 1fr", alignItems:"center"}}>
+                                         <span style={{color:"#ef4444", fontWeight:600}}>High Risk</span>
+                                         <div style={{display:"flex", gap: 16}}>
+                                              {["whatsapp","slack","digest"].map(c => (
+                                                  (c !== "slack" || PLAN_FEATURES.slack_integration) && (
+                                                      <label key={c} style={{display:"flex", gap: 6, alignItems:"center", fontSize:13, textTransform:"capitalize", opacity: ((c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled))) ? 0.5 : 1}}>
+                                                          <input type="checkbox" 
+                                                            checked={formData.routing_high.includes(c)} 
+                                                            onChange={()=>toggleRouting("high", c)}
+                                                            disabled={(c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled))}
+                                                          />
+                                                          {c}
+                                                      </label>
+                                                  )
+                                              ))}
+                                         </div>
+                                     </div>
+                                     
+                                     <div style={{display:"grid", gridTemplateColumns:"100px 1fr", alignItems:"center"}}>
+                                         <span style={{color:"#f59e0b", fontWeight:600}}>Medium</span>
+                                         <div style={{display:"flex", gap: 16}}>
+                                              {["whatsapp","slack","digest"].map(c => (
+                                                  (c !== "slack" || PLAN_FEATURES.slack_integration) && (
+                                                      <label key={c} style={{display:"flex", gap: 6, alignItems:"center", fontSize:13, textTransform:"capitalize", opacity: ((c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled))) ? 0.5 : 1}}>
+                                                          <input type="checkbox" 
+                                                            checked={formData.routing_medium.includes(c)} 
+                                                            onChange={()=>toggleRouting("medium", c)}
+                                                            disabled={(c==="whatsapp" && !formData.whatsapp_enabled) || (c==="slack" && (!formData.slack_enabled))}
+                                                          />
+                                                          {c}
+                                                      </label>
+                                                  )
+                                              ))}
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                             
+                             {/* Digest */}
+                            <div style={{padding: 20, background:"#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                                 <label style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: formData.digest_enabled ? 16 : 0}}>
+                                    <div style={{fontWeight: 600}}>Daily Digest</div>
+                                    <input type="checkbox" checked={formData.digest_enabled} onChange={e=>update("digest_enabled", e.target.checked)}/>
+                                </label>
+                                {formData.digest_enabled && (
+                                    <div style={{display:"grid", gridTemplateColumns: "1fr 100px", gap: 10}}>
+                                        <input style={inputStyle} value={formData.digest_recipients || formData.contact_email} onChange={e=>update("digest_recipients", e.target.value)} placeholder="Email(s)"/>
+                                        <input style={inputStyle} type="time" value={formData.digest_time} onChange={e=>update("digest_time", e.target.value)} />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- STEP 4: Connect Inbox (Previously Step 2) --- */}
+                    {step === 4 && (
                         <div style={{display:"grid", gap: 20}}>
                             <div style={{display:"grid", gap: 12}}>
                                 {formData.monitored_addresses.map((email, idx) => (
@@ -599,6 +720,8 @@ export default function Onboarding() {
                                 )}
                             </div>
                             
+                            {/* Terms Checkbox removed (now in modal) */}
+
                              {/* Success Message AFTER connecting */}
                             {mailboxId && (
                                 <div style={{background:"#ecfdf5", padding: 16, borderRadius: 8, color:"#065f46", fontSize: 14}}>
@@ -608,8 +731,8 @@ export default function Onboarding() {
                         </div>
                     )}
                     
-                    {/* --- STEP 4: Review --- */}
-                    {step === 4 && (
+                    {/* --- STEP 5 --- */}
+                    {step === 5 && (
                         <div style={{display:"grid", gap: 20}}>
                             <div style={{background:"#f8fafc", padding: 20, borderRadius: 10, display:"grid", gap: 12}}>
                                 <Row label="Company" val={formData.company_name} />
@@ -647,17 +770,17 @@ export default function Onboarding() {
                         Back
                     </button>
                     
-                    {/* Logic Updates for Step 3 (Connect) */}
-                    {step === 3 && !mailboxId ? (
+                    {/* Button Logic Updates for Step 4 */}
+                    {step === 4 && !mailboxId ? (
                          <button onClick={handleConnectClick} disabled={loading} style={primaryBtn}>
                              {loading ? "Connecting..." : "Connect Inboxes"}
                          </button>
-                    ) : step === 4 ? (
+                    ) : step === 5 ? (
                          <button onClick={finalize} disabled={loading} style={{...primaryBtn, background:"#10b981"}}>
                              {loading ? "Finishing..." : "Complete Setup"}
                          </button>
                     ) : (
-                         <button onClick={() => setStep(s => Math.min(4, s + 1))} style={primaryBtn}>
+                         <button onClick={() => setStep(s => Math.min(5, s + 1))} style={primaryBtn}>
                              Next &rarr;
                          </button>
                     )}
