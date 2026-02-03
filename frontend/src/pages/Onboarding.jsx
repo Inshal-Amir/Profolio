@@ -300,6 +300,19 @@ export default function Onboarding() {
      const signals = [
          ...Object.keys(formData.selected_universal_signals).filter(k=>formData.selected_universal_signals[k])
      ];
+
+     // Categorize signals
+     const allSignals = [...UNIVERSAL_SIGNALS, ...activeRecommendedSignals];
+     const highRiskSignals = [];
+     const medRiskSignals = [];
+
+     signals.forEach(sigLabel => {
+        const found = allSignals.find(s => s.label === sigLabel);
+        if (found) {
+            if (found.risk === "high") highRiskSignals.push(sigLabel);
+            else medRiskSignals.push(sigLabel); // Default to medium if not high
+        }
+     });
      
      // Validate Alerts
      const channels = [];
@@ -314,7 +327,9 @@ export default function Onboarding() {
      const payload = {
          mailbox_id: mailboxId,
          config: {
-             default_signals_selected: signals,
+             // default_signals_selected: signals, // Removed in favor of split
+             risk_identifiers_high: highRiskSignals,
+             risk_identifiers_med: medRiskSignals,
              alert_channels: channels,
              whatsapp_numbers: formData.whatsapp_enabled ? formData.whatsapp_numbers.filter(x=>x.trim()) : [],
              whatsapp_consent: formData.whatsapp_consent,

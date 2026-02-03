@@ -210,7 +210,9 @@ app.post("/api/onboarding/finalize", async(req, res) => {
         if(!onboarding) return res.status(400).json({error: "Session expired"});
 
         // Merge config
-        onboarding.default_signals_selected = config.default_signals_selected || [];
+        onboarding.risk_identifiers_high = config.risk_identifiers_high || [];
+        onboarding.risk_identifiers_med = config.risk_identifiers_med || [];
+        // onboarding.default_signals_selected = config.default_signals_selected || []; // Deprecated
         onboarding.alert_channels = config.alert_channels || [];
         onboarding.whatsapp_numbers = config.whatsapp_numbers || [];
         onboarding.whatsapp_consent = !!config.whatsapp_consent;
@@ -222,7 +224,9 @@ app.post("/api/onboarding/finalize", async(req, res) => {
         
         // Prepare N8N payload
         // Prepare Common Config Strings
-        const signalsStr = (onboarding.default_signals_selected || []).join(", ");
+        const riskHighStr = (onboarding.risk_identifiers_high || []).join(", ");
+        const riskMedStr = (onboarding.risk_identifiers_med || []).join(", ");
+        // const signalsStr = (onboarding.default_signals_selected || []).join(", ");
         const waNumbersStr = (onboarding.whatsapp_numbers || []).join(", ");
         const slackUrlsStr = (onboarding.slack_webhook_urls || []).join(", ");
         const alertChannelsStr = (onboarding.alert_channels || []).join(", ");
@@ -260,7 +264,9 @@ app.post("/api/onboarding/finalize", async(req, res) => {
                 
                 monitored_address: conn.authed_email, 
                 
-                default_signals_selected: signalsStr,
+                risk_identifiers_high: riskHighStr,
+                risk_identifiers_med: riskMedStr,
+                // default_signals_selected: signalsStr,
                 alert_channels: alertChannelsStr,
                 whatsapp_numbers: waNumbersStr,
                 whatsapp_consent: onboarding.whatsapp_consent,
@@ -286,7 +292,9 @@ app.post("/api/onboarding/finalize", async(req, res) => {
                 timezone: onboarding.timezone,
                 connected_emails: onboarding.connected_emails.join(", "),
                 
-                default_signals_selected: signalsStr,
+                risk_identifiers_high: riskHighStr,
+                risk_identifiers_med: riskMedStr,
+                // default_signals_selected: signalsStr,
                 alert_channels: alertChannelsStr,
                 whatsapp_numbers: waNumbersStr,
                 whatsapp_consent: onboarding.whatsapp_consent,
