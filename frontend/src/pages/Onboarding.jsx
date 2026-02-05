@@ -135,6 +135,7 @@ export default function Onboarding() {
     // Step 4
     whatsapp_enabled: true,
     whatsapp_numbers: [""],
+    whatsapp_codes: ["+1"], // Initialize with default code
     whatsapp_consent: false,
     
     slack_enabled: false,
@@ -224,14 +225,24 @@ export default function Onboarding() {
   function addArrayItem(field) {
      setFormData(prev => {
          if(prev[field].length >= 5) return prev;
-         return { ...prev, [field]: [...prev[field], ""] };
+         const newState = { ...prev, [field]: [...prev[field], ""] };
+         if (field === "whatsapp_numbers") {
+             newState.whatsapp_codes = [...(prev.whatsapp_codes || []), "+1"];
+         }
+         return newState;
      });
   }
   
   function removeArrayItem(field, index) {
       setFormData(prev => {
           const arr = prev[field].filter((_, i) => i !== index);
-          return { ...prev, [field]: arr.length ? arr : [""] };
+          const newState = { ...prev, [field]: arr.length ? arr : [""] };
+          
+          if (field === "whatsapp_numbers") {
+              const codes = (prev.whatsapp_codes || []).filter((_, i) => i !== index);
+              newState.whatsapp_codes = codes.length ? codes : ["+1"];
+          }
+          return newState;
       });
   }
 
@@ -331,7 +342,11 @@ export default function Onboarding() {
              risk_identifiers_high: highRiskSignals,
              risk_identifiers_med: medRiskSignals,
              alert_channels: channels,
-             whatsapp_numbers: formData.whatsapp_enabled ? formData.whatsapp_numbers.filter(x=>x.trim()) : [],
+             whatsapp_numbers: formData.whatsapp_enabled ? formData.whatsapp_numbers.map((num, i) => {
+                 if (!num.trim()) return null;
+                 const code = formData.whatsapp_codes?.[i] || "+1";
+                 return `${code}${num.trim()}`;
+             }).filter(Boolean) : [],
              whatsapp_consent: formData.whatsapp_consent,
              slack_webhook_urls: formData.slack_enabled ? formData.slack_urls.filter(x=>x.trim()) : [],
              routing: {
@@ -663,8 +678,12 @@ export default function Onboarding() {
                                     <div style={{display:"grid", gap: 10}}>
                                         {formData.whatsapp_numbers.map((num, i) => (
                                             <div key={i} style={{display:"flex", gap: 8}}>
-                                                <select style={{...inputStyle, width: 80}}>
-                                                    {EXT_COUNTRIES.map(c => <option key={c.code}>{c.code} {c.flag}</option>)}
+                                                <select 
+                                                    style={{...inputStyle, width: 80}}
+                                                    value={formData.whatsapp_codes?.[i] || "+1"}
+                                                    onChange={e => handleArrayUpdate("whatsapp_codes", i, e.target.value)}
+                                                >
+                                                    {EXT_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.code} {c.flag}</option>)}
                                                 </select>
                                                 <input 
                                                     style={{...inputStyle, flex:1, width: "auto"}} 
