@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { postJSON, backendRedirectUrl } from "../lib/api.js";
 import { useSearchParams } from "react-router-dom";
-import "./OnboardingResponsive.css";
+import "./OnboardingResponsive.css"; // Import CSS
+
 
 // --- Helpers ---
 function isEmail(v) {
@@ -416,26 +417,25 @@ export default function Onboarding() {
   ];
 
   return (
-        
-        <div className="onboarding-wrapper" style={{fontFamily: "'Inter', system-ui, sans-serif", background:"#f4f6f8", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding: 20}}>
+    <div className="onboarding-wrapper">
         
         {/* MODAL */}
         {modalContent && (
-            <div className="modal-overlay" style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center", zIndex: 999}}>
-                <div className="modal-content-box" style={{background:"white", padding: 30, borderRadius: 16, maxWidth: 500, width:"100%", maxHeight:"80vh", overflowY:"auto"}}>
-                    <h2 style={{marginTop:0, fontSize: 22}}>{modalContent.title}</h2>
+            <div className="modal-overlay">
+                <div className="modal-box">
+                    <h2 className="modal-title">{modalContent.title}</h2>
                     <div style={{color:"#475569", margin:"20px 0"}}>{modalContent.body}</div>
-                    <button onClick={()=>setModalContent(null)} style={primaryBtn}>Close</button>
+                    <button onClick={()=>setModalContent(null)} className="btn-primary">Close</button>
                 </div>
             </div>
         )}
 
         {/* CONSENT MODAL */}
         {showConsentModal && (
-            <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center", zIndex: 999}}>
-                <div style={{background:"white", padding: 30, borderRadius: 16, maxWidth: 500, width:"100%", maxHeight:"80vh", display:"flex", flexDirection:"column"}}>
-                    <h2 style={{marginTop:0, fontSize: 22}}>Terms & Privacy</h2>
-                    <div style={{flex:1, overflowY:"auto", margin:"20px 0", border:"1px solid #e2e8f0", padding:16, borderRadius:8, background:"#f8fafc", fontSize:13, lineHeight:1.5}}>
+            <div className="modal-overlay">
+                <div className="modal-box">
+                    <h2 className="modal-title">Terms & Privacy</h2>
+                    <div className="modal-content-scroll">
                         <p><strong>Terms of Service</strong></p>
                         <p>By connecting your inbox, you agree to allow MailWise to scan your emails for specified signals. We only store metadata associated with alerts. We do not store email bodies permanently. MailWise is an assistance tool. We are not responsible for missed alerts.</p>
                         <p><strong>Privacy Policy</strong></p>
@@ -448,11 +448,11 @@ export default function Onboarding() {
                     </label>
                     
                     <div style={{display:"flex", gap:12, justifyContent:"flex-end"}}>
-                         <button onClick={()=>setShowConsentModal(false)} style={secondaryBtn}>Cancel</button>
+                         <button onClick={()=>setShowConsentModal(false)} className="btn-secondary">Cancel</button>
                          <button onClick={()=>{
                              if(!formData.compliance_accept) return alert("Please accept the terms.");
                              startOnboarding();
-                         }} disabled={!formData.compliance_accept || loading} style={{...primaryBtn, opacity: formData.compliance_accept ? 1 : 0.5}}>
+                         }} disabled={!formData.compliance_accept || loading} className="btn-primary" style={{ opacity: formData.compliance_accept ? 1 : 0.5}}>
                              {loading ? "Connecting..." : "Agree & Connect"}
                          </button>
                     </div>
@@ -460,29 +460,26 @@ export default function Onboarding() {
             </div>
         )}
         
-        <div className="onboarding-card" style={{background:"white", width:"100%", maxWidth: 900, borderRadius: 16, boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display:"flex", overflow:"hidden", minHeight: 600}}>
+        <div className="onboarding-container">
             
             {/* Sidebar / Progress */}
-            <div className="onboarding-sidebar" style={{width: 240, background: "#f8fafc", borderRight: "1px solid #eef2f6", padding: 30, display:"flex", flexDirection:"column"}}>
-                <h2 style={{fontSize: 20, fontWeight: 700, color:"#1e293b", marginBottom: 40}}>MailWise</h2>
+            <div className="onboarding-sidebar">
+                <h2 className="sidebar-title">MailWise</h2>
                 
-                <div className="onboarding-sidebar-steps" style={{display:"flex", flexDirection:"column", gap: 24}}>
+                <div className="sidebar-steps">
                     {STEPS.map((s, idx) => {
                         const num = idx + 1;
                         const active = num === step;
                         const done = num < step;
                         
                         return (
-                            <div key={num} style={{display:"flex", alignItems:"center", gap: 12, opacity: (active || done) ? 1 : 0.4}}>
-                                <div style={{
-                                    width: 28, height: 28, borderRadius: "50%", 
+                            <div key={num} className="step-item" style={{opacity: (active || done) ? 1 : 0.4}}>
+                                <div className="step-circle" style={{
                                     background: active ? "#6D6CFB" : (done ? "#10b981" : "#cbd5e1"),
-                                    color: "white", display:"flex", alignItems:"center", justifyContent:"center",
-                                    fontSize: 12, fontWeight: 700
                                 }}>
                                     {done ? "✓" : num}
                                 </div>
-                                <div className="step-label" style={{fontSize: 14, fontWeight: 500, color: active ? "#0f172a" : "#64748b"}}>
+                                <div className="step-label" style={{color: active ? "#0f172a" : "#64748b"}}>
                                     {s}
                                 </div>
                             </div>
@@ -490,23 +487,23 @@ export default function Onboarding() {
                     })}
                 </div>
                 
-                <div style={{marginTop: "auto", fontSize: 12, color:"#94a3b8"}}>
+                <div className="sidebar-footer">
                     Status: {PLAN_FEATURES.plan_name} Plan
                 </div>
             </div>
             
             {/* Main Content */}
-            <div className="onboarding-content" style={{flex: 1, padding: 40, display:"flex", flexDirection:"column"}}>
+            <div className="onboarding-content">
                 
-                <div style={{marginBottom: 20}}>
-                    <h1 style={{fontSize: 24, fontWeight: 700, margin: 0, marginBottom: 8}}>
+                <div className="content-header">
+                    <h1 className="content-title">
                         {step === 1 && "Start by setting up the basics"}
                         {step === 2 && "Tell us which messages matter most"}
                         {step === 3 && "Alerting & Routing"}
                         {step === 4 && "Connect your inboxes"}
                         {step === 5 && "Review & Launch"}
                     </h1>
-                    <p style={{margin: 0, color: "#64748b"}}>
+                    <p className="content-subtitle">
                          {step === 1 && "We'll tailor the AI to your industry."}
                          {step === 2 && "Configure what MailWise looks for."}
                          {step === 3 && "Where should alerts go?"}
@@ -515,20 +512,20 @@ export default function Onboarding() {
                     </p>
                 </div>
                 
-                <div style={{flex: 1, overflowY:"auto"}}>
-                    {err && <div style={{background:"#fef2f2", color:"#991b1b", padding: 12, borderRadius: 8, marginBottom: 20, fontSize: 14}}>{err}</div>}
+                <div className="content-body">
+                    {err && <div className="text-error">{err}</div>}
                     
                     {/* --- STEP 1: Business Information --- */}
                     {step === 1 && (
-                        <div style={{display:"grid", gap: 20}}>
-                             <label style={{display:"block"}}>
-                                <span style={{display:"block", fontSize: 13, fontWeight: 600, marginBottom: 6}}>Company Name</span>
-                                <input style={inputStyle} value={formData.company_name} onChange={e=>update("company_name", e.target.value)} placeholder="Acme Inc."/>
+                        <div className="step-section">
+                             <label className="form-block">
+                                <span className="form-label">Company Name</span>
+                                <input className="form-input" value={formData.company_name} onChange={e=>update("company_name", e.target.value)} placeholder="Acme Inc."/>
                             </label>
                             
-                            <label style={{display:"block"}}>
-                                <span style={{display:"block", fontSize: 13, fontWeight: 600, marginBottom: 6}}>Business Type</span>
-                                <select style={inputStyle} value={formData.business_type} onChange={e=>update("business_type", e.target.value)}>
+                            <label className="form-block">
+                                <span className="form-label">Business Type</span>
+                                <select className="form-select" value={formData.business_type} onChange={e=>update("business_type", e.target.value)}>
                                     {PRESETS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                 </select>
                             </label>
@@ -538,16 +535,16 @@ export default function Onboarding() {
                                 <div style={{display:"flex", flexWrap:"wrap", gap: 8}}>
                                     {/* Just showing a flat list of some signals for preview */ }
                                     {activeRecommendedSignals.slice(0,3).map(s => (
-                                        <span key={s.label} style={{background:"white", border:"1px solid #cbd5e1", padding:"4px 8px", borderRadius: 4, fontSize: 12, color:"#334155"}}>
+                                        <span key={s.label} className="signal-tag">
                                             {s.label}
                                         </span>
                                     ))}
                                 </div>
                             </div>
 
-                            <label style={{display:"block"}}>
-                                <span style={{display:"block", fontSize: 13, fontWeight: 600, marginBottom: 6}}>Contact Email</span>
-                                <input style={inputStyle} type="email" value={formData.contact_email} onChange={e=>update("contact_email", e.target.value)} placeholder="you@company.com"/>
+                            <label className="form-block">
+                                <span className="form-label">Contact Email</span>
+                                <input className="form-input" type="email" value={formData.contact_email} onChange={e=>update("contact_email", e.target.value)} placeholder="you@company.com"/>
                             </label>
                         </div>
                     )}
@@ -561,26 +558,17 @@ export default function Onboarding() {
                            </div>
 
                            {/* Recommended Section - Boxed */}
-                           <div style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", marginBottom: 24, background: "#f8fafc"}}>
-                               <div style={{padding: "12px 16px", borderBottom: "1px solid #e2e8f0", background: "#f1f5f9"}}>
+                           <div className="signal-box recommended">
+                               <div className="signal-header dark">
                                    <div style={{fontWeight: 700, fontSize: 14, color: "#334155"}}>Recommended Signals based on your business type</div>
                                </div>
-                               <div style={{padding: "12px 16px", fontSize: 13, color: "#64748b", borderBottom: "1px solid #e2e8f0", background: "#f8fafc"}}>
+                               <div className="signal-explainer">
                                    Pre-selected based on your business. You can change these anytime.
                                </div>
-                               <div style={{background: "#eff6ff"}}>
+                               <div className="signal-list-blue">
                                     {activeRecommendedSignals.map((s, idx) => (
-                                        <label key={s.label} style={{
-                                            display:"flex", alignItems:"center", gap: 12, padding: "12px 16px", cursor: "pointer",
-                                            borderBottom: idx < activeRecommendedSignals.length - 1 ? "1px solid #dae4f3" : "none",
-                                            background: !!formData.selected_universal_signals[s.label] ? "#eff6ff" : "white"
-                                        }}>
-                                           <div style={{
-                                               width: 20, height: 20, borderRadius: 4, 
-                                               background: !!formData.selected_universal_signals[s.label] ? "#2563eb" : "white",
-                                               border: !!formData.selected_universal_signals[s.label] ? "none" : "1px solid #cbd5e1",
-                                               display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontSize: 14
-                                           }}>
+                                        <label key={s.label} className={`signal-row ${formData.selected_universal_signals[s.label] ? 'selected' : ''}`}>
+                                           <div className={`signal-checkbox ${formData.selected_universal_signals[s.label] ? 'checkbox-checked' : 'checkbox-unchecked'}`}>
                                                {!!formData.selected_universal_signals[s.label] && "✓"}
                                            </div>
                                             {/* Hidden checkbox for logic */}
@@ -598,8 +586,8 @@ export default function Onboarding() {
                            </div>
 
                            {/* Universal Section */}
-                           <div style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background: "white"}}>
-                           <div className="universal-signals-header" style={{padding: "12px 16px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                           <div className="signal-box">
+                               <div className="signal-header">
                                    <div style={{fontWeight: 700, fontSize: 14, color: "#334155"}}>Universal Signals</div>
                                    <div style={{display:"flex", gap: 12, fontSize: 13}}>
                                         <button 
@@ -608,7 +596,7 @@ export default function Onboarding() {
                                                 UNIVERSAL_SIGNALS.forEach(s => updates[s.label] = true);
                                                 setFormData(prev => ({...prev, selected_universal_signals: {...prev.selected_universal_signals, ...updates}}));
                                             }}
-                                            style={{background:"none", border:"none", color:"#2563eb", cursor:"pointer", fontWeight: 500}}
+                                            className="btn-link"
                                         >
                                             Select All
                                         </button>
@@ -619,7 +607,7 @@ export default function Onboarding() {
                                                 UNIVERSAL_SIGNALS.forEach(s => updates[s.label] = false);
                                                 setFormData(prev => ({...prev, selected_universal_signals: {...prev.selected_universal_signals, ...updates}}));
                                             }}
-                                            style={{background:"none", border:"none", color:"#2563eb", cursor:"pointer", fontWeight: 500}}
+                                            className="btn-link"
                                         >
                                             Clear
                                         </button>
@@ -627,22 +615,8 @@ export default function Onboarding() {
                                </div>
                                <div>
                                     {UNIVERSAL_SIGNALS.map((s, idx) => (
-                                        <label key={s.label} style={{
-                                            display:"flex", alignItems:"center", gap: 12, padding: "12px 16px", cursor: "pointer",
-                                            borderBottom: idx < UNIVERSAL_SIGNALS.length - 1 ? "1px solid #f1f5f9" : "none",
-                                            background: "white"
-                                        }}>
-                                           <div style={{
-                                               width: 20, height: 20, borderRadius: 4, 
-                                               background: !!formData.selected_universal_signals[s.label] ? "#ef4444" : "white", // Red check for universal per image implies style? Image shows check icons. 
-                                               // Actually image has blue checks for Recommended and RED checks for Universal? 
-                                               // Wait, looking closely at image:
-                                               // Recommended -> Blue checks
-                                               // Universal -> Red checks
-                                               // Let's implement that.
-                                               border: !!formData.selected_universal_signals[s.label] ? "none" : "1px solid #cbd5e1",
-                                               display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontSize: 14
-                                           }}>
+                                        <label key={s.label} className={`signal-row ${formData.selected_universal_signals[s.label] ? 'selected' : ''}`}>
+                                           <div className={`signal-checkbox ${formData.selected_universal_signals[s.label] ? 'checkbox-express' : 'checkbox-unchecked'}`}>
                                                {!!formData.selected_universal_signals[s.label] && "✓"}
                                            </div>
                                             <input 
@@ -666,12 +640,12 @@ export default function Onboarding() {
                     )}
 
 
-                    {/* --- STEP 3: Routes (Previously Step 4) --- */}
+                    {/* --- STEP 3: Routes --- */}
                     {step === 3 && (
-                        <div style={{display:"grid", gap: 24}}>
+                        <div className="step-section">
                             
                             {/* Alert Channels */}
-                            <div style={{padding: 20, background:"#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                            <div className="panel-box">
                                 <label style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: formData.whatsapp_enabled ? 16 : 0}}>
                                     <div style={{fontWeight: 600}}>WhatsApp Alerts</div>
                                     <input type="checkbox" checked={formData.whatsapp_enabled} onChange={e=>update("whatsapp_enabled", e.target.checked)}/>
@@ -680,16 +654,18 @@ export default function Onboarding() {
                                 {formData.whatsapp_enabled && (
                                     <div style={{display:"grid", gap: 10}}>
                                         {formData.whatsapp_numbers.map((num, i) => (
-                                            <div key={i} className="input-row-group" style={{display:"flex", gap: 8}}>
+                                            <div key={i} style={{display:"flex", gap: 8}}>
                                                 <select 
-                                                    style={{...inputStyle, width: 80}}
+                                                    className="form-select"
+                                                    style={{width: 80}}
                                                     value={formData.whatsapp_codes?.[i] || "+1"}
                                                     onChange={e => handleArrayUpdate("whatsapp_codes", i, e.target.value)}
                                                 >
                                                     {EXT_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.code} {c.flag}</option>)}
                                                 </select>
                                                 <input 
-                                                    style={{...inputStyle, flex:1, width: "auto"}} 
+                                                    className="form-input"
+                                                    style={{flex:1, width: "auto"}} 
                                                     value={num} 
                                                     onChange={e=>handleArrayUpdate("whatsapp_numbers", i, e.target.value)} 
                                                     placeholder="7123456789"
@@ -697,8 +673,8 @@ export default function Onboarding() {
                                             </div>
                                         ))}
                                         <div style={{display:"flex", gap:12}}>
-                                             <button onClick={()=>addArrayItem("whatsapp_numbers")} style={{fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>+ Add Number</button>
-                                             <button onClick={()=>alert("Test Alert Sent!")} style={{fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>Send Test Alert &rarr;</button>
+                                             <button onClick={()=>addArrayItem("whatsapp_numbers")} className="btn-link">+ Add Number</button>
+                                             <button onClick={()=>alert("Test Alert Sent!")} className="btn-link">Send Test Alert &rarr;</button>
                                         </div>
                                        
                                         <label style={{display:"flex", gap: 8, fontSize: 12, marginTop: 8}}>
@@ -711,7 +687,7 @@ export default function Onboarding() {
 
                             {/* Slack Section -- CONDITIONAL */}
                              {PLAN_FEATURES.slack_integration && (
-                                <div style={{padding: 20, background: "#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                                <div className="panel-box">
                                     <label style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: formData.slack_enabled ? 16 : 0}}>
                                         <div style={{fontWeight: 600}}>
                                             Slack Alerts 
@@ -722,23 +698,23 @@ export default function Onboarding() {
                                     {formData.slack_enabled && (
                                          <div style={{display:"grid", gap: 10}}>
                                             {formData.slack_urls.map((v,i)=>(
-                                                <div key={i} className="input-row-group" style={{display:"flex", gap: 8}}>
-                                                    <input value={v} onChange={e=>handleArrayUpdate("slack_urls", i, e.target.value)} placeholder="https://hooks.slack.com/..." style={inputStyle}/>
+                                                <div key={i} style={{display:"flex", gap: 8}}>
+                                                    <input value={v} onChange={e=>handleArrayUpdate("slack_urls", i, e.target.value)} placeholder="https://hooks.slack.com/..." className="form-input"/>
                                                     <button onClick={()=>removeArrayItem("slack_urls", i)} style={{color:"#ef4444", background:"none", border:"none", cursor:"pointer"}}>✕</button>
                                                 </div>
                                             ))}
-                                            <button onClick={()=>addArrayItem("slack_urls")} style={{width:"fit-content", fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>+ Add URL</button>
+                                            <button onClick={()=>addArrayItem("slack_urls")} className="btn-link" style={{width:"fit-content"}}>+ Add URL</button>
                                         </div>
                                     )}
                                 </div>
                              )}
 
                             {/* Routing */}
-                             <div style={{padding: 20, background:"#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                             <div className="panel-box">
                                  <h4 style={{marginTop:0, marginBottom:16}}>Routing Logic</h4>
                                  
                                  <div style={{display:"grid", gap: 16}}>
-                                     <div style={{display:"grid", gridTemplateColumns:"100px 1fr", alignItems:"center"}}>
+                                     <div className="routing-grid">
                                          <span style={{color:"#ef4444", fontWeight:600}}>High Risk</span>
                                          <div style={{display:"flex", gap: 16}}>
                                               {["whatsapp","slack","digest"].map(c => (
@@ -756,7 +732,7 @@ export default function Onboarding() {
                                          </div>
                                      </div>
                                      
-                                     <div style={{display:"grid", gridTemplateColumns:"100px 1fr", alignItems:"center"}}>
+                                     <div className="routing-grid">
                                          <span style={{color:"#f59e0b", fontWeight:600}}>Medium</span>
                                          <div style={{display:"flex", gap: 16}}>
                                               {["whatsapp","slack","digest"].map(c => (
@@ -777,30 +753,31 @@ export default function Onboarding() {
                              </div>
                              
                              {/* Digest */}
-                            <div style={{padding: 20, background:"#fff", border:"1px solid #e2e8f0", borderRadius: 10}}>
+                            <div className="panel-box">
                                  <label style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: formData.digest_enabled ? 16 : 0}}>
                                     <div style={{fontWeight: 600}}>Daily Digest</div>
                                     <input type="checkbox" checked={formData.digest_enabled} onChange={e=>update("digest_enabled", e.target.checked)}/>
                                 </label>
                                 {formData.digest_enabled && (
-                                    <div className="digest-row" style={{display:"grid", gridTemplateColumns: "1fr 100px", gap: 10}}>
-                                        <input style={inputStyle} value={formData.digest_recipients || formData.contact_email} onChange={e=>update("digest_recipients", e.target.value)} placeholder="Email(s)"/>
-                                        <input style={inputStyle} type="time" value={formData.digest_time} onChange={e=>update("digest_time", e.target.value)} />
+                                    <div className="digest-row">
+                                        <input className="form-input" value={formData.digest_recipients || formData.contact_email} onChange={e=>update("digest_recipients", e.target.value)} placeholder="Email(s)"/>
+                                        <input className="form-input" type="time" value={formData.digest_time} onChange={e=>update("digest_time", e.target.value)} />
                                     </div>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    {/* --- STEP 4: Connect Inbox (Previously Step 2) --- */}
+                    {/* --- STEP 4: Connect Inbox --- */}
                     {step === 4 && (
-                        <div style={{display:"grid", gap: 20}}>
+                        <div className="step-section">
                             <div style={{display:"grid", gap: 12}}>
                                 {formData.monitored_addresses.map((email, idx) => (
-                                    <div key={idx} style={{display:"flex", gap: 10}}>
+                                    <div key={idx} className="inbox-row">
                                         <div style={{flex: 1, position:"relative"}}>
                                             <input 
-                                                style={{...inputStyle, paddingRight: 40}}
+                                                className="form-input"
+                                                style={{paddingRight: 40}}
                                                 value={email} 
                                                 onChange={e=>handleArrayUpdate("monitored_addresses", idx, e.target.value)}
                                                 placeholder="support@company.com"
@@ -819,17 +796,15 @@ export default function Onboarding() {
                                     </div>
                                 ))}
                                 {!mailboxId && formData.monitored_addresses.length < 5 && (
-                                    <button onClick={()=>addArrayItem("monitored_addresses")} style={{width:"fit-content", fontSize: 13, color:"#2563eb", background:"none", border:"none", cursor:"pointer"}}>
+                                    <button onClick={()=>addArrayItem("monitored_addresses")} className="btn-link" style={{width:"fit-content"}}>
                                         + Add another email
                                     </button>
                                 )}
                             </div>
                             
-                            {/* Terms Checkbox removed (now in modal) */}
-
                              {/* Success Message AFTER connecting */}
                             {mailboxId && (
-                                <div style={{background:"#ecfdf5", padding: 16, borderRadius: 8, color:"#065f46", fontSize: 14}}>
+                                <div className="text-success">
                                     <strong>Connected successfully.</strong> Your inboxes are authorized. Click Next to review.
                                 </div>
                             )}
@@ -838,17 +813,17 @@ export default function Onboarding() {
                     
                     {/* --- STEP 5 --- */}
                     {step === 5 && (
-                        <div style={{display:"grid", gap: 20}}>
-                            <div style={{background:"#f8fafc", padding: 20, borderRadius: 10, display:"grid", gap: 12}}>
+                        <div className="step-section">
+                            <div className="review-panel">
                                 <Row label="Company" val={formData.company_name} />
                                 <Row label="Business" val={formData.business_type} />
-                                <div style={{display:"flex", justifyContent:"space-between", borderBottom:"1px solid #e2e8f0", paddingBottom: 8}}>
+                                <div className="review-row">
                                     <span style={{color:"#64748b", fontSize: 13}}>Signals Configured</span>
                                     <div style={{display:"flex", alignItems:"center", gap:8}}>
                                         <span style={{fontWeight: 500, fontSize: 13, textAlign:"right"}}>
                                             {Object.values(formData.selected_universal_signals).filter(Boolean).length} Active
                                         </span>
-                                        <button onClick={()=>setStep(2)} style={{border:"none", background:"none", color:"#2563eb", cursor:"pointer", fontSize:12, textDecoration:"underline"}}>Edit</button>
+                                        <button onClick={()=>setStep(2)} className="btn-link" style={{fontSize:12}}>Edit</button>
                                     </div>
                                 </div>
                                 <Row label="Alerts" val={formData.whatsapp_enabled ? "WhatsApp Enabled" : "No Instant Alerts"} />
@@ -857,8 +832,8 @@ export default function Onboarding() {
                             </div>
                             
                             <div style={{display:"flex", gap: 12}}>
-                                <button onClick={()=>alert("Sending test alert...")} style={secondaryBtn}>Send Test Alert</button>
-                                <button onClick={()=>alert("Sending test digest...")} style={secondaryBtn}>Send Test Digest</button>
+                                <button onClick={()=>alert("Sending test alert...")} className="btn-secondary">Send Test Alert</button>
+                                <button onClick={()=>alert("Sending test digest...")} className="btn-secondary">Send Test Digest</button>
                             </div>
                         </div>
                     )}
@@ -866,26 +841,27 @@ export default function Onboarding() {
                 </div>
                 
                 {/* Footer / Nav */}
-                <div className="onboarding-footer" style={{paddingTop: 20, borderTop:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between"}}>
+                <div className="footer-nav">
                     <button 
                         onClick={() => setStep(s => Math.max(1, s - 1))}
                         disabled={step === 1} 
-                        style={{...secondaryBtn, opacity: step === 1 ? 0.5 : 1}}
+                        className="btn-secondary"
+                        style={{opacity: step === 1 ? 0.5 : 1}}
                     >
                         Back
                     </button>
                     
                     {/* Button Logic Updates for Step 4 */}
                     {step === 4 && !mailboxId ? (
-                         <button onClick={handleConnectClick} disabled={loading} style={primaryBtn}>
+                         <button onClick={handleConnectClick} disabled={loading} className="btn-primary">
                              {loading ? "Connecting..." : "Connect Inboxes"}
                          </button>
                     ) : step === 5 ? (
-                         <button onClick={finalize} disabled={loading} style={{...primaryBtn, background:"#10b981"}}>
+                         <button onClick={finalize} disabled={loading} className="btn-primary" style={{background:"#10b981"}}>
                              {loading ? "Finishing..." : "Complete Setup"}
                          </button>
                     ) : (
-                         <button onClick={() => setStep(s => Math.min(5, s + 1))} style={primaryBtn}>
+                         <button onClick={() => setStep(s => Math.min(5, s + 1))} className="btn-primary">
                              Next &rarr;
                          </button>
                     )}
@@ -899,21 +875,10 @@ export default function Onboarding() {
 
 // --- Styles & Subcomponents ---
 
-const inputStyle = {
-    padding: "10px 12px", borderRadius: 8, border: "1px solid #cbd5e1", width: "100%", fontSize: 14, outline: "none"
-};
-
-const primaryBtn = {
-    padding: "10px 20px", borderRadius: 8, border: "none", background: "#0f172a", color: "white", fontWeight: 600, cursor: "pointer", fontSize: 14
-};
-
-const secondaryBtn = {
-    padding: "10px 20px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontWeight: 500, cursor: "pointer", fontSize: 14
-};
 
 function Row({label, val}) {
     return (
-        <div className="review-row" style={{display:"flex", justifyContent:"space-between", borderBottom:"1px solid #e2e8f0", paddingBottom: 8}}>
+        <div className="review-row">
             <span style={{color:"#64748b", fontSize: 13}}>{label}</span>
             <span style={{fontWeight: 500, fontSize: 13, textAlign:"right"}}>{val}</span>
         </div>
@@ -922,10 +887,10 @@ function Row({label, val}) {
 
 function RiskBadge({risk}) {
     if(risk === 'high') {
-         return <span style={{fontSize: 11, fontWeight: 600, color:"white", background:"#ef4444", padding:"2px 8px", borderRadius: 4}}>High Risk</span>;
+         return <span className="risk-badge risk-high">High Risk</span>;
     }
     if(risk === 'medium') {
-         return <span style={{fontSize: 11, fontWeight: 600, color:"#78350f", background:"#fcd34d", padding:"2px 8px", borderRadius: 4}}>Medium Risk</span>;
+         return <span className="risk-badge risk-medium">Medium Risk</span>;
     }
     return null;
 }

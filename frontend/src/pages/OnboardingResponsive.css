@@ -1,202 +1,471 @@
-/* Mobile Responsive Overrides for Onboarding.jsx */
-
-/* GLOBAL MOBILE RULES (max-width: 768px) */
-@media (max-width: 768px) {
-  
-  /* 2. Global Box Sizing & Font Adjustments */
-  * {
-    box-sizing: border-box !important;
-  }
-  
-  /* 1. Max Width & Overflow Fixes */
-  div, section, article, main, aside, header, footer,
-  input, select, textarea, button, img, svg {
-    max-width: 100% !important;
-  }
-  
-  /* 4. Text Wrapping */
-  p, h1, h2, h3, h4, h5, h6, span, div, li, label, input, button {
-    overflow-wrap: anywhere !important;
-    word-break: break-word !important;
-    hyphens: auto !important;
-  }
-
-  /* WRAPPER */
-  .onboarding-wrapper {
-    padding: 20px !important; /* Standard padding for tablet */
-    align-items: flex-start !important;
-    height: auto !important;
-    min-height: 100vh !important;
-    width: 100% !important;
-  }
-
-  /* CARD */
-  .onboarding-card {
-    flex-direction: column !important;
-    height: auto !important;
-    width: 100% !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-    border-radius: 12px !important; /* Slightly smaller radius */
-  }
-
-  /* SIDEBAR */
-  .onboarding-sidebar {
-    width: 100% !important;
-    border-right: none !important;
-    border-bottom: 1px solid #eef2f6 !important;
-    padding: 20px !important;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    flex-wrap: wrap !important;
-    gap: 16px !important;
-  }
-  
-  .onboarding-sidebar h2 {
-    margin-bottom: 0 !important;
-    font-size: 18px !important;
-  }
-  
-  .onboarding-sidebar-steps {
-    flex-direction: row !important;
-    gap: 12px !important;
-    overflow-x: auto !important;
-    padding-bottom: 4px !important;
-    font-size: 12px !important;
-  }
-  
-  /* CONTENT AREA */
-  .onboarding-content {
-    padding: 30px !important; /* Slightly less than desktop 40px */
-    width: 100% !important;
-    overflow-x: hidden !important; /* Prevent horizontal scroll */
-  }
-  
-  .onboarding-content h1 {
-    font-size: 22px !important;
-    line-height: 1.3 !important;
-  }
-  
-  /* MODALS */
-  .modal-overlay {
-    padding: 10px !important;
-    align-items: center !important; 
-  }
-  
-  .modal-content-box {
-    width: 100% !important;
-    max-width: 100% !important;
-    max-height: 90vh !important;
-    padding: 20px !important;
-    margin: 0 !important;
-  }
-
-  /* INNER COMPONENTS */
-  
-  /* Universal Signals Header */
-  .universal-signals-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-  }
-  
-  .universal-signals-header > div:last-child {
-      align-self: flex-start !important; /* Align left on mobile */
-      width: 100% !important;
-      display: flex !important;
-      gap: 16px !important;
-  }
-
-  /* Form Rows (WhatsApp, Slack) */
-  .input-row-group {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    width: 100% !important;
-  }
-  
-  .input-row-group select,
-  .input-row-group input {
-      width: 100% !important;
-      min-width: 0 !important; /* Fix flex child overflow */
-  }
-
-  /* Digest Row */
-  .digest-row {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-
-  /* Review Row */
-  .review-row {
-      flex-direction: column !important;
-      align-items: flex-start !important;
-      gap: 6px !important;
-  }
-  
-  .review-row span {
-      text-align: left !important;
-      font-size: 14px !important;
-  }
-  
-  /* Footer */
-  .onboarding-footer {
-      flex-direction: row !important; /* Keep buttons side-by-side if they fit */
-      gap: 10px !important;
-      flex-wrap: wrap !important;
-  }
-  
-  .onboarding-footer button {
-      flex: 1 !important; /* Stretch buttons */
-      white-space: nowrap !important;
-  }
+/* Base Styles (Desktop Default) - Matches previous inline styles exactly */
+.onboarding-wrapper {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f4f6f8;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
-/* SMALL MOBILE SPECIFIC (max-width: 430px) */
-@media (max-width: 430px) {
-    
-    /* 5. Reduced Padding/Margins */
+.onboarding-container {
+  background: white;
+  width: 100%;
+  max-width: 900px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  display: flex;
+  overflow: hidden;
+  min-height: 600px;
+}
+
+/* Sidebar */
+.onboarding-sidebar {
+  width: 240px;
+  background: #f8fafc;
+  border-right: 1px solid #eef2f6;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 40px;
+}
+
+.sidebar-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.step-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* Content Area */
+.onboarding-content {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent spillover */
+}
+
+.content-header {
+  margin-bottom: 20px;
+}
+
+.content-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #0f172a;
+}
+
+.content-subtitle {
+  margin: 0;
+  color: #64748b;
+}
+
+.content-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px; /* Space for scrollbar if needed */
+}
+
+/* Form Elements */
+.form-input, .form-select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  width: 100%;
+  font-size: 14px;
+  outline: none;
+  background: white;
+  box-sizing: border-box; /* Critical for width: 100% */
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #334155;
+}
+
+.form-block {
+  display: block;
+  margin-bottom: 16px; /* spacing between inputs if stacked */
+}
+
+/* Buttons */
+.btn-primary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #0f172a;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #334155;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-link {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  text-decoration: none;
+}
+.btn-link:hover { text-decoration: underline; }
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px; /* Safety padding for mobile */
+}
+
+.modal-box {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-title {
+  margin-top: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.modal-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  margin: 20px 0;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+/* Step 2: Signals */
+.signal-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  background: white; /* Default to white unless overridden */
+}
+
+/* Modifier: Recommended Box */
+.signal-box.recommended {
+  background: #f8fafc;
+}
+
+.signal-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Modifier: Darker Header */
+.signal-header.dark {
+  background: #f1f5f9;
+}
+
+.signal-explainer {
+    padding: 12px 16px; 
+    font-size: 13px; 
+    color: #64748b; 
+    border-bottom: 1px solid #e2e8f0; 
+    background: #f8fafc;
+}
+
+.signal-list-blue {
+    background: #eff6ff;
+}
+
+.signal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: white;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+}
+.signal-row:last-child { border-bottom: none; }
+.signal-row.selected { background: #eff6ff; }
+.signal-row:hover { background: #f8fafc; }
+
+.signal-checkbox {
+   width: 20px; 
+   height: 20px; 
+   border-radius: 4px; 
+   display: flex; 
+   align-items: center; 
+   justify-content: center; 
+   color: white; 
+   font-size: 14px;
+}
+.checkbox-checked { background: #2563eb; border: none; }
+.checkbox-unchecked { background: white; border: 1px solid #cbd5e1; }
+.checkbox-express { background: #ef4444; border: none; } /* U-Signals */
+
+/* Signal Tags (Step 1) */
+.signal-tag {
+    background: white;
+    border: 1px solid #cbd5e1;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #334155;
+}
+
+/* Step Layout */
+.step-section {
+    display: grid;
+    gap: 24px;
+}
+
+/* Step 3: Routes & Alerts */
+.panel-box {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.routing-grid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* Step 5: Review */
+.review-panel {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 10px;
+  display: grid;
+  gap: 12px;
+}
+
+.review-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+/* Step 4: Inbox */
+.inbox-row {
+  display: flex;
+  gap: 10px;
+}
+
+.digest-row {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 10px;
+}
+
+/* Utilities */
+.risk-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.risk-high { background: #ef4444; color: white; }
+.risk-medium { background: #fcd34d; color: #78350f; }
+
+.text-error { color: #991b1b; background: #fef2f2; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; }
+.text-success { color: #065f46; background: #ecfdf5; padding: 16px; border-radius: 8px; font-size: 14px; }
+.text-subtle { color: #64748b; font-size: 13px; }
+
+/* Footer */
+.footer-nav {
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto; /* Push to bottom if flex container permits */
+}
+
+/* --- MOBILE RESPONSIVENESS (Max Width 480px / 768px) --- */
+
+@media (max-width: 768px) {
     .onboarding-wrapper {
-        padding: 10px !important;
+        padding: 10px;
+        align-items: flex-start; /* Allow scrolling on small screens */
     }
     
-    .onboarding-content {
-        padding: 20px 16px !important; /* Tighter padding */
+    .onboarding-container {
+        flex-direction: column;
+        min-height: auto; /* Let content dictate height */
+        height: auto;
     }
-    
+
     .onboarding-sidebar {
-        padding: 16px !important;
-        flex-direction: column !important;
-        align-items: flex-start !important;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #eef2f6;
+        padding: 20px;
+        flex-direction: row; /* Horizontal layout for steps? */
+        align-items: center;
+        justify-content: space-between;
+        box-sizing: border-box;
     }
     
-    .onboarding-sidebar-steps {
-        width: 100% !important;
-        justify-content: space-between !important;
-        gap: 8px !important;
+    /* Horizontal Stepper for Mobile */
+    .sidebar-steps {
+        flex-direction: row;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px; /* Scrollbar space */
+        width: 100%;
     }
     
-    /* Hide labels on small screens to prevent wrap mess */
+    /* Hide labels on very small screens or make them compact */
     .step-label {
-        display: none !important;
+        display: none; /* Hide text labels on mobile to save space */
     }
     
-    /* Footer Buttons Stack triggers */
-    .onboarding-footer {
-        flex-direction: column-reverse !important; /* Stack Back button at bottom? Or just column */
+    .sidebar-title {
+        display: none; /* Hide title to save space, or make smaller */
     }
     
-    .onboarding-footer button {
-        width: 100% !important;
+    .sidebar-footer {
+        display: none; /* Hide status on mobile */
+    }
+
+    .onboarding-content {
+        padding: 20px;
+        height: auto;
+        overflow-y: visible; /* Scroll on body instead */
+    }
+
+    .content-body {
+        overflow-y: visible;
+    }
+}
+
+@media (max-width: 480px) {
+    .content-title {
+        font-size: 20px;
     }
     
-    h1 {
-        font-size: 20px !important;
+    /* Stack routing grids */
+    .routing-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        align-items: flex-start;
     }
     
-    p, span, div, label, input {
-        font-size: 14px !important; /* Ensure readable text size */
+    .routing-grid > span {
+        margin-bottom: 4px;
+    }
+    
+    .routing-grid > div {
+        flex-wrap: wrap; 
+    }
+    
+    /* Adjust buttons */
+    .footer-nav {
+        flex-direction: column-reverse; /* Primary button on top usually better, or stick to row? */
+        gap: 12px;
+    }
+    .footer-nav button {
+        width: 100%;
+    }
+    
+    /* Inputs */
+    .digest-row {
+        grid-template-columns: 1fr !important; /* Force stack for Digest time input */
+    }
+    
+    /* Modal */
+    .modal-box {
+        padding: 20px;
+        max-height: 90vh;
+    }
+    
+    /* Step 4: Inbox Rows */
+    .inbox-row {
+        flex-wrap: wrap; 
+    }
+    .inbox-row button {
+        align-self: flex-end; /* Align remove X */
+        padding: 10px; 
     }
 }
