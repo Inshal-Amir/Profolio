@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { postJSON, backendRedirectUrl } from "../lib/api.js";
 import { useSearchParams } from "react-router-dom";
+import "./OnboardingResponsive.css";
 
 // --- Helpers ---
 function isEmail(v) {
@@ -415,12 +416,13 @@ export default function Onboarding() {
   ];
 
   return (
-    <div style={{fontFamily: "'Inter', system-ui, sans-serif", background:"#f4f6f8", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding: 20}}>
+        
+        <div className="onboarding-wrapper" style={{fontFamily: "'Inter', system-ui, sans-serif", background:"#f4f6f8", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding: 20}}>
         
         {/* MODAL */}
         {modalContent && (
-            <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center", zIndex: 999}}>
-                <div style={{background:"white", padding: 30, borderRadius: 16, maxWidth: 500, width:"100%", maxHeight:"80vh", overflowY:"auto"}}>
+            <div className="modal-overlay" style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center", zIndex: 999}}>
+                <div className="modal-content-box" style={{background:"white", padding: 30, borderRadius: 16, maxWidth: 500, width:"100%", maxHeight:"80vh", overflowY:"auto"}}>
                     <h2 style={{marginTop:0, fontSize: 22}}>{modalContent.title}</h2>
                     <div style={{color:"#475569", margin:"20px 0"}}>{modalContent.body}</div>
                     <button onClick={()=>setModalContent(null)} style={primaryBtn}>Close</button>
@@ -458,13 +460,13 @@ export default function Onboarding() {
             </div>
         )}
         
-        <div style={{background:"white", width:"100%", maxWidth: 900, borderRadius: 16, boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display:"flex", overflow:"hidden", minHeight: 600}}>
+        <div className="onboarding-card" style={{background:"white", width:"100%", maxWidth: 900, borderRadius: 16, boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display:"flex", overflow:"hidden", minHeight: 600}}>
             
             {/* Sidebar / Progress */}
-            <div style={{width: 240, background: "#f8fafc", borderRight: "1px solid #eef2f6", padding: 30, display:"flex", flexDirection:"column"}}>
+            <div className="onboarding-sidebar" style={{width: 240, background: "#f8fafc", borderRight: "1px solid #eef2f6", padding: 30, display:"flex", flexDirection:"column"}}>
                 <h2 style={{fontSize: 20, fontWeight: 700, color:"#1e293b", marginBottom: 40}}>MailWise</h2>
                 
-                <div style={{display:"flex", flexDirection:"column", gap: 24}}>
+                <div className="onboarding-sidebar-steps" style={{display:"flex", flexDirection:"column", gap: 24}}>
                     {STEPS.map((s, idx) => {
                         const num = idx + 1;
                         const active = num === step;
@@ -480,7 +482,7 @@ export default function Onboarding() {
                                 }}>
                                     {done ? "✓" : num}
                                 </div>
-                                <div style={{fontSize: 14, fontWeight: 500, color: active ? "#0f172a" : "#64748b"}}>
+                                <div className="step-label" style={{fontSize: 14, fontWeight: 500, color: active ? "#0f172a" : "#64748b"}}>
                                     {s}
                                 </div>
                             </div>
@@ -494,7 +496,7 @@ export default function Onboarding() {
             </div>
             
             {/* Main Content */}
-            <div style={{flex: 1, padding: 40, display:"flex", flexDirection:"column"}}>
+            <div className="onboarding-content" style={{flex: 1, padding: 40, display:"flex", flexDirection:"column"}}>
                 
                 <div style={{marginBottom: 20}}>
                     <h1 style={{fontSize: 24, fontWeight: 700, margin: 0, marginBottom: 8}}>
@@ -597,7 +599,7 @@ export default function Onboarding() {
 
                            {/* Universal Section */}
                            <div style={{border:"1px solid #e2e8f0", borderRadius: 8, overflow:"hidden", background: "white"}}>
-                               <div style={{padding: "12px 16px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                           <div className="universal-signals-header" style={{padding: "12px 16px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
                                    <div style={{fontWeight: 700, fontSize: 14, color: "#334155"}}>Universal Signals</div>
                                    <div style={{display:"flex", gap: 12, fontSize: 13}}>
                                         <button 
@@ -678,7 +680,7 @@ export default function Onboarding() {
                                 {formData.whatsapp_enabled && (
                                     <div style={{display:"grid", gap: 10}}>
                                         {formData.whatsapp_numbers.map((num, i) => (
-                                            <div key={i} style={{display:"flex", gap: 8}}>
+                                            <div key={i} className="input-row-group" style={{display:"flex", gap: 8}}>
                                                 <select 
                                                     style={{...inputStyle, width: 80}}
                                                     value={formData.whatsapp_codes?.[i] || "+1"}
@@ -720,7 +722,7 @@ export default function Onboarding() {
                                     {formData.slack_enabled && (
                                          <div style={{display:"grid", gap: 10}}>
                                             {formData.slack_urls.map((v,i)=>(
-                                                <div key={i} style={{display:"flex", gap: 8}}>
+                                                <div key={i} className="input-row-group" style={{display:"flex", gap: 8}}>
                                                     <input value={v} onChange={e=>handleArrayUpdate("slack_urls", i, e.target.value)} placeholder="https://hooks.slack.com/..." style={inputStyle}/>
                                                     <button onClick={()=>removeArrayItem("slack_urls", i)} style={{color:"#ef4444", background:"none", border:"none", cursor:"pointer"}}>✕</button>
                                                 </div>
@@ -781,7 +783,7 @@ export default function Onboarding() {
                                     <input type="checkbox" checked={formData.digest_enabled} onChange={e=>update("digest_enabled", e.target.checked)}/>
                                 </label>
                                 {formData.digest_enabled && (
-                                    <div style={{display:"grid", gridTemplateColumns: "1fr 100px", gap: 10}}>
+                                    <div className="digest-row" style={{display:"grid", gridTemplateColumns: "1fr 100px", gap: 10}}>
                                         <input style={inputStyle} value={formData.digest_recipients || formData.contact_email} onChange={e=>update("digest_recipients", e.target.value)} placeholder="Email(s)"/>
                                         <input style={inputStyle} type="time" value={formData.digest_time} onChange={e=>update("digest_time", e.target.value)} />
                                     </div>
@@ -864,7 +866,7 @@ export default function Onboarding() {
                 </div>
                 
                 {/* Footer / Nav */}
-                <div style={{paddingTop: 20, borderTop:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between"}}>
+                <div className="onboarding-footer" style={{paddingTop: 20, borderTop:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between"}}>
                     <button 
                         onClick={() => setStep(s => Math.max(1, s - 1))}
                         disabled={step === 1} 
@@ -911,7 +913,7 @@ const secondaryBtn = {
 
 function Row({label, val}) {
     return (
-        <div style={{display:"flex", justifyContent:"space-between", borderBottom:"1px solid #e2e8f0", paddingBottom: 8}}>
+        <div className="review-row" style={{display:"flex", justifyContent:"space-between", borderBottom:"1px solid #e2e8f0", paddingBottom: 8}}>
             <span style={{color:"#64748b", fontSize: 13}}>{label}</span>
             <span style={{fontWeight: 500, fontSize: 13, textAlign:"right"}}>{val}</span>
         </div>

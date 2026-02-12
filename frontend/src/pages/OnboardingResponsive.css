@@ -1,0 +1,151 @@
+/* Mobile Responsive Overrides for Onboarding.jsx */
+
+@media (max-width: 768px) {
+  /* Wrapper: Reduce padding on mobile */
+  .onboarding-wrapper {
+    padding: 10px !important;
+    align-items: flex-start !important; /* Allow scrolling from top if content is tall */
+  }
+
+  /* Card: Stack vertically, remove fixed height if needed */
+  .onboarding-card {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0 !important; /* Allow shrinking */
+    max-height: none !important; /* Allow growing */
+    overflow: visible !important; /* Let content flow */
+  }
+
+  /* Sidebar: Move to top or make collapsible (simplified for mobile: stack on top) */
+  .onboarding-sidebar {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid #eef2f6 !important;
+    padding: 20px !important;
+    flex-direction: row !important; /* Horizontal layout for steps on mobile? */
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  
+  /* Sidebar Title */
+  .onboarding-sidebar h2 {
+    margin-bottom: 0 !important;
+    font-size: 18px !important;
+  }
+  
+  /* Sidebar Steps Container: Show as row or simple progress */
+  .onboarding-sidebar-steps {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+  }
+  
+  /* Hide text labels on very small screens if needed, or keep short */
+  .step-label {
+    display: none !important; /* Hide labels to save space, just show circles? Or maybe just active one? */
+  }
+  /* Show active step label? */
+  .step-item-active .step-label {
+    display: block !important;
+    font-size: 12px !important;
+  }
+
+  /* Content Area */
+  .onboarding-content {
+    padding: 20px !important;
+    overflow: visible !important; /* Let page scroll naturally on mobile */
+  }
+  
+  /* Content Header */
+  .onboarding-content h1 {
+    font-size: 20px !important;
+  }
+  
+  /* Universal Signals Header */
+  .universal-signals-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  
+  .universal-signals-header > div:last-child {
+      align-self: flex-end !important;
+  }
+
+  /* Form Rows (WhatsApp, Slack) */
+  .input-row-group {
+    flex-direction: column !important;
+  }
+  
+  .input-row-group select {
+      width: 100% !important;
+  }
+  
+  .input-row-group input {
+      width: 100% !important;
+  }
+
+  /* Digest Row */
+  .digest-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Review Row */
+  .review-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 4px !important;
+  }
+  .review-row span:last-child {
+      text-align: left !important;
+  }
+
+  /* Footer */
+  .onboarding-footer {
+      padding-top: 10px !important;
+      align-items: center !important;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    align-items: flex-end !important; /* Sheet style or just center? Center is fine but requires width checks */
+  }
+  
+  .modal-content-box {
+    width: 95% !important;
+    max-width: none !important;
+    max-height: 90vh !important;
+    padding: 20px !important;
+  }
+  
+  /* Form Inputs */
+  .mobile-stack {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  
+  .mobile-full-width {
+    width: 100% !important;
+  }
+}
+
+/* Specific tweaks for 320-480px specifically */
+@media (max-width: 480px) {
+    .onboarding-sidebar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .onboarding-sidebar-steps {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .step-label {
+        display: none !important; /* Force hide labels on small screens */
+    }
+}
