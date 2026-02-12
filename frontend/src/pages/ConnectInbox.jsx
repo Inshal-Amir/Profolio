@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from "react";
 import { useSearchParams } from "react-router-dom";
 import { getJSON } from "../lib/api.js";
+import "./ConnectInboxResponsive.css";
 
 export default function ConnectInbox(){
   const [sp]=useSearchParams();
@@ -39,7 +40,7 @@ export default function ConnectInbox(){
   }
 
   return (
-    <div style={{maxWidth:560,margin:"40px auto",padding:16,fontFamily:"system-ui"}}>
+    <div className="auth-container" style={{maxWidth:560,margin:"40px auto",padding:16,fontFamily:"system-ui"}}>
       <h1 style={{marginBottom:6}}>Connect your inbox</h1>
       <p style={{marginTop:0,opacity:.8}}>
         MailWise will monitor high-risk emails and alert you on WhatsApp. We never ask for your email password.
@@ -52,14 +53,14 @@ export default function ConnectInbox(){
       ):null}
 
       {mailbox?(
-        <div style={{border:"1px solid #ddd",borderRadius:10,padding:12,marginBottom:14}}>
+        <div className="status-box" style={{border:"1px solid #ddd",borderRadius:10,padding:12,marginBottom:14}}>
           <div style={{fontSize:12,opacity:.7}}>Connecting mailbox</div>
           <div style={{fontWeight:600}}>{mailbox.mailbox_address||"(unknown)"}</div>
           <div style={{fontSize:12,opacity:.7}}>Status: {mailbox.status||"unknown"}</div>
         </div>
       ):null}
 
-      <div style={{display:"grid",gap:10}}>
+      <div className="button-grid" style={{display:"grid",gap:10}}>
         <button onClick={()=>go("google")} style={{padding:"10px 12px",borderRadius:10,border:"1px solid #ccc"}}>
           Connect Gmail (Google Workspace)
         </button>
