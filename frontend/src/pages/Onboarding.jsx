@@ -92,6 +92,7 @@ const EXT_COUNTRIES = [
     { code: "+52", flag: "🇲🇽" },
     { code: "+27", flag: "🇿🇦" },
     { code: "+971", flag: "🇦🇪" },
+    { code: "+922", flag: "🇦🇪" },
 ];
 
 // Mock Plan - In real app, this would come from user session/context
